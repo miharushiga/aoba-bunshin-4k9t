@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>分身を動かす｜株式会社あおば食品（架空）</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#fff; --ink:#1d2430; --sub:#5b6472; --line:#ddd8cc;
+    --navy:#1f3a5f; --accent:#b4572a; --soft:#eef2f7; --warm:#fbf1e8; --ok:#2f6b4f;
+    --red:#ffc7ce; --yellow:#ffeb9c; --head2:#d9e1f2;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;line-height:1.7;font-size:16px}
+  header.top{position:sticky;top:0;background:var(--navy);color:#fff;z-index:20}
+  header.top .in{max-width:1200px;margin:0 auto;padding:8px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13px}
+  header.top a{color:#fff;text-decoration:none;padding:4px 10px;border-radius:14px;background:rgba(255,255,255,.12)}
+  header.top a:hover{background:rgba(255,255,255,.28)}
+  header.top .ttl{font-weight:700;margin-right:auto;font-size:14px}
+  main{max-width:1200px;margin:0 auto;padding:0 16px 140px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px 32px;margin:24px 0;scroll-margin-top:56px}
+  .no{font-size:13px;color:var(--accent);font-weight:700;letter-spacing:.08em}
+  h1{font-size:30px;margin:6px 0 10px;color:var(--navy);line-height:1.4}
+  h2{font-size:24px;margin:4px 0 14px;color:var(--navy)}
+  h3{font-size:18px;color:var(--navy);margin:20px 0 8px}
+  .sub{color:var(--sub);font-size:14px}
+  .locked{opacity:.35;pointer-events:none;filter:grayscale(.6)}
+  .btn{font:inherit;font-size:17px;font-weight:700;border:none;border-radius:10px;padding:12px 26px;cursor:pointer;
+    background:var(--accent);color:#fff}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy);font-size:14px;padding:6px 14px}
+  .pdfs{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+  .pdf{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:10px 14px;
+    background:var(--soft);color:var(--navy);text-decoration:none;font-size:15px}
+  .pdf::before{content:"PDF";font-size:11px;font-weight:700;background:#c0392b;color:#fff;border-radius:4px;padding:1px 5px}
+  .log{background:#14202f;color:#d7e3f2;border-radius:10px;padding:16px 18px;font-family:"SF Mono",Menlo,monospace;font-size:14px;
+    min-height:60px;margin:14px 0;white-space:pre-wrap}
+  .log .ok{color:#7fd49b}
+  .log .hi{color:#ffd27a}
+  /* シート */
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;margin:12px 0 0}
+  .tab{font:inherit;font-size:15px;border:1px solid var(--line);border-bottom:none;border-radius:10px 10px 0 0;
+    background:#e9e5dc;padding:8px 18px;cursor:pointer;color:var(--sub)}
+  .tab.on{background:#fff;color:var(--navy);font-weight:700;border-color:#b9c7da}
+  .sheet{display:none;border:1px solid #b9c7da;border-radius:0 10px 10px 10px;background:#fff;overflow:auto;max-height:70vh}
+  .sheet.on{display:block}
+  .sheet table{border-collapse:collapse;width:100%;min-width:900px;font-size:13.5px;table-layout:fixed}
+  .sheet td{border:1px solid #e3e0d8;padding:5px 8px;vertical-align:top;word-break:break-word;position:relative}
+  .sheet tr.gap td{border:none;height:10px;padding:0}
+  .sheet td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .sheet td.neg{color:#b02a1e}
+  .sheet td.b{font-weight:700}
+  .sheet td.head{background:#1f3864;color:#fff;font-weight:700}
+  .sheet td.head2{background:var(--head2);font-weight:700}
+  .sheet td.red{background:var(--red)}
+  .sheet td.yellow{background:var(--yellow)}
+  .sheet td.has-note{cursor:pointer}
+  .sheet td.has-note::after{content:"";position:absolute;top:0;right:0;border-style:solid;border-width:0 9px 9px 0;
+    border-color:transparent #c0392b transparent transparent}
+  .sheet td.has-note:hover{outline:2px solid var(--accent);outline-offset:-2px}
+  .sheet td.sel{outline:3px solid var(--accent);outline-offset:-3px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--sub);margin:8px 0}
+  .legend i{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:4px;border:1px solid #ccc}
+  /* コメント欄 */
+  .note-panel{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;width:min(1100px,calc(100% - 32px));
+    background:#fffdf7;border:2px solid var(--accent);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.18);
+    padding:14px 46px 14px 18px;z-index:30;display:none;max-height:38vh;overflow:auto;font-size:15px}
+  .note-panel.on{display:block}
+  .note-panel .where{font-size:12px;color:var(--accent);font-weight:700}
+  .note-panel .x{position:absolute;right:10px;top:8px;border:none;background:none;font-size:22px;cursor:pointer;color:var(--sub)}
+  .lg{background:rgba(31,58,95,.07);border-bottom:2px dotted #8aa0bf}
+  .lg.new{background:#fff1a8;border-bottom:2px solid var(--accent);animation:flash 1.6s ease 2}
+  @keyframes flash{50%{background:#ffd27a}}
+  tr.added td{background:#fff7cc}
+  /* 帳簿 */
+  .ledger{width:100%;border-collapse:collapse;font-size:14.5px;margin:10px 0}
+  .ledger th,.ledger td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  .ledger thead th{background:var(--navy);color:#fff}
+  .ledger td.src{width:24%;color:var(--sub);font-size:13.5px}
+  .ledger td.key{width:13%;font-weight:700;color:var(--navy)}
+  .ledger tr.mine td{background:#fff7cc}
+  .ledger tr.mine td.src{color:var(--accent);font-weight:700}
+  .form{display:grid;grid-template-columns:160px 1fr;gap:10px 14px;align-items:start;background:var(--warm);
+    border:1px solid #e3c3a8;border-radius:12px;padding:18px 20px;margin:14px 0}
+  .form label{font-weight:700;color:var(--navy);padding-top:8px}
+  .form select,.form textarea,.form input{font:inherit;font-size:16px;padding:8px 10px;border:1px solid #c9bfae;border-radius:8px;width:100%;background:#fff}
+  .form textarea{min-height:76px;resize:vertical}
+  .result{border-left:4px solid var(--ok);background:#eef7f1;padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0;display:none}
+  .result.on{display:block}
+  .policy{border:1px solid var(--line);border-radius:10px;padding:8px 24px 16px;background:#fff;max-height:70vh;overflow:auto}
+  .policy h2{font-size:21px}.policy h3{font-size:17px}.policy h4{font-size:15.5px;color:var(--accent);margin:12px 0 4px}
+  .flowline{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .flowline span{background:var(--soft);border:1px solid #b9c7da;border-radius:8px;padding:6px 12px;font-size:14px}
+  .flowline b{color:var(--accent)}
+  .note{font-size:13.5px;color:var(--sub)}
+  /* 前後の比較 */
+  section.wide{width:calc(100vw - 32px);max-width:1800px;position:relative;left:50%;transform:translateX(-50%)}
+  .cmp-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .cmp-tabs button{font:inherit;font-size:14px;border:1px solid #b9c7da;border-radius:16px;background:#fff;color:var(--navy);padding:5px 14px;cursor:pointer}
+  .cmp-tabs button.on{background:var(--navy);color:#fff}
+  .panes{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pane h3{margin:0 0 6px;font-size:17px;padding:6px 12px;border-radius:8px}
+  .pane-l h3{background:#eceae4;color:var(--sub)}
+  .pane-r h3{background:#fff1a8;color:var(--accent)}
+  .pane .sheet{display:block;max-height:62vh}
+  .pane .sheet table{min-width:0;font-size:12.5px}
+  .lg.old{background:#f3e3e3;border-bottom:2px solid #c98b8b}
+  .diff{width:100%;border-collapse:collapse;font-size:14.5px;margin:12px 0}
+  .diff th,.diff td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+  .diff thead th{background:var(--navy);color:#fff}
+  .diff td.where{width:18%;font-weight:700;color:var(--navy)}
+  .diff td.was{background:#f6efef;color:#6b4b4b}
+  .diff td.now{background:#fff7cc}
+  @media (max-width:900px){.panes{grid-template-columns:1fr}}
+  @media (max-width:720px){section{padding:20px 16px}.form{grid-template-columns:1fr}.form label{padding-top:0}}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <span class="ttl">分身を動かす｜株式会社あおば食品（架空）</span>
+  <a href="#st1">1 届いた資料</a><a href="#st2">2 分身を動かす</a><a href="#st3">3 面談前の資料</a>
+  <a href="#st4">4 道家様の声で直す</a><a href="#cmp">前と後を比べる</a><a href="#st5">5 面談のあと</a>
+  
+</div></header>
+
+<main>
+
+<section id="st0" style="background:var(--navy);color:#fff;border:none">
+  <div class="no" style="color:#f0c9a8">試作　データはすべて架空</div>
+  <h1 style="color:#fff">お客様の資料を置くと、<br>面談前の資料一式が出てくる</h1>
+  <p style="color:#d5deea;margin:0">見る順番は、道家様のお答えのとおり「顧客マスター → 財務分析シート（CF→BS→PL）→ フォロー記録」です。</p>
+</section>
+
+<section id="st1">
+  <div class="no">1</div>
+  <h2>お客様から届いた資料（架空）</h2>
+  <p>お客様からはPDFが多いと伺ったので、PDFで用意しました。押すと中身が開きます。</p>
+  <div class="pdfs"><a class="pdf" href="pdf/借入一覧表_あおば食品（架空）.pdf" target="_blank">借入一覧表_あおば食品（架空）</a><a class="pdf" href="pdf/決算書_第21期_あおば食品（架空）.pdf" target="_blank">決算書_第21期_あおば食品（架空）</a><a class="pdf" href="pdf/決算書_第22期_あおば食品（架空）.pdf" target="_blank">決算書_第22期_あおば食品（架空）</a><a class="pdf" href="pdf/決算書_第23期_あおば食品（架空）.pdf" target="_blank">決算書_第23期_あおば食品（架空）</a><a class="pdf" href="pdf/試算表_第24期（8か月）_あおば食品（架空）.pdf" target="_blank">試算表_第24期（8か月）_あおば食品（架空）</a></div>
+  <p class="note">試作では、PDFと同じ数字を先に入れてあります。届いたPDFから数字を読み取る所は、検算の1件で一緒に確かめます。</p>
+</section>
+
+<section id="st2">
+  <div class="no">2</div>
+  <h2>分身を動かす</h2>
+  <p>分身は最初に、道家様の「見る順番と様式」と「知見の帳簿」を読みます。</p>
+  <button class="btn" id="run">▶ 分身を動かす</button>
+  <div class="log" id="log">（ボタンを押すと、ここに分身の作業が出ます）</div>
+</section>
+
+<section id="st3" class="locked">
+  <div class="no">3</div>
+  <h2>出来上がった面談前の資料</h2>
+  <p>下のタブを、左から順に開きます。<b>右上に赤い三角があるセルを押すと、分身の所見（コメント）</b>が下に出ます。</p>
+  <div class="legend"><span><i style="background:var(--red)"></i>薄赤＝悪化</span><span><i style="background:var(--yellow)"></i>薄黄＝注意</span>
+    <span><i style="background:rgba(31,58,95,.12);border-bottom:2px dotted #8aa0bf"></i>知見の帳簿から来た見方</span></div>
+  <div class="flowline"><span>見せどころ</span><span>財務分析 <b>D26</b> 売掛金</span><span>財務分析 <b>D27</b> 在庫</span><span>財務分析 <b>D32</b> 役員貸付金</span><span>フォロー記録 <b>②の7</b></span></div>
+  <div class="book" id="book-before"><div class="tabs"><button class="tab" data-book="before" data-target="before-顧客マスター">1. 顧客マスター</button><button class="tab" data-book="before" data-target="before-財務分析">2. 財務分析</button><button class="tab" data-book="before" data-target="before-フォロー記録">3. フォロー記録</button></div><div class="sheet" data-sheet="before-顧客マスター"><table><colgroup><col style="width:29.9%"><col style="width:11.7%"><col style="width:11.7%"><col style="width:11.7%"><col style="width:9.1%"><col style="width:26.0%"></colgroup><tr data-row="1"><td class="b">顧客マスター　A社（架空）</td><td class=""></td><td class=""></td><td class=""></td><td class=""></td><td class=""></td></tr><tr data-row="2"><td class="">架空データ。固有名詞は伏せ字（対応表は別ファイル）。分身の下書き。</td><td class=""></td><td class=""></td><td class=""></td><td class=""></td><td class=""></td></tr><tr class="gap"><td colspan="6"></td></tr><tr data-row="4"><td class="head2 b">① 顧客概要</td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="5"><td class="b">業種</td><td class="" colspan="5">惣菜・弁当の製造卸（スーパー向け）</td></tr><tr data-row="6"><td class="b">所在地</td><td class="" colspan="5">（所在地は伏せ）</td></tr><tr data-row="7"><td class="b">創業</td><td class="" colspan="5">1998年</td></tr><tr data-row="8"><td class="b">従業員</td><td class="" colspan="5">正社員28名・パート46名</td></tr><tr data-row="9"><td class="b">代表者</td><td class="" colspan="5">A氏（架空・62歳）</td></tr><tr data-row="10"><td class="b">決算月</td><td class="" colspan="5">3月</td></tr><tr data-row="11"><td class="b">直近決算（第23期）の売上高</td><td class="" colspan="5">471,000千円（第21期比 -9.4%）</td></tr><tr data-row="12"><td class="b">直近決算（第23期）の当期純利益</td><td class="" colspan="5">-19,570千円</td></tr><tr data-row="13"><td class="b">最新（第24期・8か月）の総資産／純資産</td><td class="" colspan="5">287,200千円 ／ 10,760千円（自己資本比率 3.7%）</td></tr><tr data-row="14"><td class="b">最新の有利子負債／月商</td><td class="" colspan="5">205,000千円 ／ 37,000千円（5.5倍）</td></tr><tr class="gap"><td colspan="6"></td></tr><tr data-row="16"><td class="head2 b">② 未払金・借入金の状況</td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="17"><td class="head b">未払金（千円）</td><td class="head b">第21期(2024/3)</td><td class="head b">第22期(2025/3)</td><td class="head b">第23期(2026/3)</td><td class="head b">第24期 試算表(2026/11・8か月)</td><td class="head b"></td></tr><tr data-row="18"><td class="">未払金残高</td><td class="num">8,000</td><td class="yellow num">9,500</td><td class="yellow num">12,000</td><td class="red num">14,500</td><td class=""></td></tr><tr data-row="19"><td class="">ヒアリングの申告</td><td class="yellow" colspan="5">社会保険料の支払を2か月遅らせている（未確認・面談で金額と相談状況を聞く）</td></tr><tr class="gap"><td colspan="6"></td></tr><tr data-row="21"><td class="head b">借入先</td><td class="head b">種類</td><td class="head b">残高（千円）</td><td class="head b">月返済（千円）</td><td class="head b">金利</td><td class="head b">保全</td></tr><tr data-row="22"><td class="">金融機関1（信用金庫・架空）</td><td class="">長期・設備</td><td class="num">70,000</td><td class="num">1,200</td><td class="">1.6%</td><td class="yellow">工場土地建物に根抵当・社長保証</td></tr><tr data-row="23"><td class="">金融機関2（銀行・架空）</td><td class="">長期・運転</td><td class="num">60,000</td><td class="num">1,000</td><td class="">1.9%</td><td class="">保証協会付き</td></tr><tr data-row="24"><td class="">金融機関3（公庫）</td><td class="">長期・運転</td><td class="num">20,000</td><td class="num">400</td><td class="">1.2%</td><td class="yellow">無担保・社長保証</td></tr><tr data-row="25"><td class="yellow">金融機関2（銀行・架空）</td><td class="yellow">当座貸越</td><td class="yellow num has-note" data-note="短期の借入（当座貸越）が借入残高の約27%。期限の更新が止まると資金繰りに直結する可能性。更新の見通しを面談で確認" data-where="顧客マスター C25">55,000</td><td class="yellow num">0</td><td class="yellow">2.4%</td><td class="yellow">保証協会付き・期限2027/3</td></tr><tr data-row="26"><td class="b">合計</td><td class=""></td><td class="b num">205,000</td><td class="b num">2,600</td><td class=""></td><td class=""></td></tr><tr class="gap"><td colspan="6"></td></tr><tr data-row="28"><td class="head2 b">③ 特筆事項</td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="29"><td class="" colspan="6">・営業赤字が第22期から3期続き、償却前でも赤字（第24期は年換算-22,350千円）</td></tr><tr data-row="30"><td class="" colspan="6">・現預金9,500千円。12月の賞与・年末の支払が不安との申告</td></tr><tr data-row="31"><td class="" colspan="6">・社会保険料の支払を2か月遅らせている（ヒアリング）。未払金は14,500千円</td></tr><tr data-row="32"><td class="" colspan="6">・役員貸付金11,000千円、在庫55,000千円、売掛金66,000千円が膨らんでいる</td></tr><tr data-row="33"><td class="" colspan="6">・主要取引先のスーパー1社（売上の約3割）が来年から仕入れ先を見直す可能性（伝聞。面談で確認）</td></tr><tr data-row="34"><td class="" colspan="6">・後継（専務）の承継と社長保証の扱いが未整理</td></tr></table></div><div class="sheet" data-sheet="before-財務分析"><table><colgroup><col style="width:35.1%"><col style="width:13.0%"><col style="width:13.0%"><col style="width:13.0%"><col style="width:13.0%"><col style="width:13.0%"></colgroup><tr data-row="1"><td class="b">財務分析シート　A社（架空）（単位：千円）</td><td class=""></td><td class=""></td><td class=""></td><td class=""></td><td class=""></td></tr><tr data-row="2"><td class="">架空データ。色：薄赤＝悪化／薄黄＝注意。セルのコメントに所見（断定せず、面談で確認する前提）。分身の下書き。</td><td class=""></td><td class=""></td><td class=""></td><td class=""></td><td class=""></td></tr><tr data-row="3"><td class="">第24期は8か月の試算表。CFは貸借対照表の増減から間接法で計算（第21期は前期が無く計算不可）。年換算＝×12/8。</td><td class=""></td><td class=""></td><td class=""></td><td class=""></td><td class=""></td></tr><tr data-row="4"><td class="head b">科目</td><td class="head b">第21期(2024/3)</td><td class="head b">第22期(2025/3)</td><td class="head b">第23期(2026/3)</td><td class="head b">第24期 試算表(2026/11・8か月)</td><td class="head b">第24期 年換算<br>（×12/8）</td></tr><tr data-row="5"><td class="head2 b">A. キャッシュフロー計算書（間接法）</td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="6"><td class="">当期純利益</td><td class="">—</td><td class="num neg">-11,170</td><td class="num neg">-19,570</td><td class="num neg">-23,500</td><td class=""></td></tr><tr data-row="7"><td class="">減価償却費</td><td class="">—</td><td class="num">8,600</td><td class="num">8,200</td><td class="num">5,300</td><td class=""></td></tr><tr data-row="8"><td class="">売上債権の増減</td><td class="">—</td><td class="num">1,000</td><td class="num neg">-2,500</td><td class="num neg">-2,500</td><td class=""></td></tr><tr data-row="9"><td class="">棚卸資産の増減</td><td class="">—</td><td class="num neg">-6,000</td><td class="num neg">-8,000</td><td class="num neg">-3,000</td><td class=""></td></tr><tr data-row="10"><td class="">その他流動資産の増減</td><td class="">—</td><td class="num neg">-500</td><td class="num neg">-500</td><td class="num neg">-500</td><td class=""></td></tr><tr data-row="11"><td class="">仕入債務の増減</td><td class="">—</td><td class="num">1,500</td><td class="num">3,500</td><td class="num">3,000</td><td class=""></td></tr><tr data-row="12"><td class="">未払金の増減</td><td class="">—</td><td class="num">1,500</td><td class="num">2,500</td><td class="num">2,500</td><td class=""></td></tr><tr data-row="13"><td class="">その他負債の増減</td><td class="">—</td><td class="num">0</td><td class="num">740</td><td class="num neg">-1,800</td><td class=""></td></tr><tr data-row="14"><td class="b">営業CF</td><td class="b">—</td><td class="red b num neg has-note" data-note="営業CFが-5,070→-15,630→-20,500千円（第24期は8か月）と3期連続マイナス。本業の資金が出ていない可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;資金繰り&quot; data-part=&quot;line&quot;&gt;償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 C14">-5,070</td><td class="red b num neg">-15,630</td><td class="red b num neg">-20,500</td><td class="b"></td></tr><tr data-row="15"><td class="">設備投資等（固定資産増減＋償却）</td><td class="">—</td><td class="num neg">-1,600</td><td class="num">8,800</td><td class="num neg">-300</td><td class=""></td></tr><tr data-row="16"><td class="">保険積立金等の増減</td><td class="">—</td><td class="num neg">-500</td><td class="num neg">-500</td><td class="num neg">-200</td><td class=""></td></tr><tr data-row="17"><td class="">役員貸付金の増減</td><td class="">—</td><td class="num neg">-3,000</td><td class="num neg">-3,500</td><td class="num neg">-1,500</td><td class=""></td></tr><tr data-row="18"><td class="b">投資CF</td><td class="b">—</td><td class="b num neg">-5,100</td><td class="yellow b num has-note" data-note="第23期は固定資産の減少が償却を上回り、投資CFがプラス（4,800千円）。資産の売却等があった可能性（特別利益4,500千円との関係も）。面談で確認" data-where="財務分析 D18">4,800</td><td class="b num neg">-2,000</td><td class="b"></td></tr><tr data-row="19"><td class="b">フリーCF</td><td class="b">—</td><td class="red b num neg">-10,170</td><td class="red b num neg">-10,830</td><td class="red b num neg">-22,500</td><td class="b"></td></tr><tr data-row="20"><td class="">短期借入金の増減</td><td class="">—</td><td class="num">10,000</td><td class="num">10,000</td><td class="num">15,000</td><td class=""></td></tr><tr data-row="21"><td class="">長期借入金の増減</td><td class="">—</td><td class="num neg">-11,830</td><td class="yellow num neg has-note" data-note="長期借入金の減少は13,170千円で、借入一覧の月返済合計×12＝31,200千円より小さい。新規の長期借入や借換えがあった可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;借入一覧&quot; data-part=&quot;line&quot;&gt;借入一覧は、残高と貸借対照表の長短借入金が合うか、返済の実際の動きと保全（担保・保証）を並べて見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 D21">-13,170</td><td class="num neg">-5,000</td><td class=""></td></tr><tr data-row="22"><td class="b">財務CF</td><td class="b">—</td><td class="b num neg">-1,830</td><td class="b num neg">-3,170</td><td class="yellow b num has-note" data-note="営業CFがマイナスの中で財務CFがプラス（10,000千円）。借入でつないでいる可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;短期借入&quot; data-part=&quot;line&quot;&gt;短期借入や当座貸越が増えているときは、赤字の穴埋めに使われていないか、期限と更新の見通しを見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E22">10,000</td><td class="b"></td></tr><tr data-row="23"><td class="b">現預金の増減</td><td class="b">—</td><td class="b num neg">-12,000</td><td class="b num neg">-14,000</td><td class="b num neg">-12,500</td><td class="b"></td></tr><tr data-row="24"><td class="head2 b">B. 貸借対照表</td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="25"><td class="">現金預金</td><td class="num">48,000</td><td class="num">36,000</td><td class="yellow num">22,000</td><td class="red num has-note" data-note="現預金が48,000→9,500千円。月商の0.26か月分で、12月の賞与・年末の支払に足りるか懸念。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;資金繰り&quot; data-part=&quot;line&quot;&gt;償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E25">9,500</td><td class=""></td></tr><tr data-row="26"><td class="">売掛金</td><td class="num">62,000</td><td class="num">61,000</td><td class="red num has-note" data-note="売上が減っている（-5.4%）のに売掛金が増えている（+4.1%）。回収の遅れ、または回収見込みの薄い債権が混じっている可能性。面談で確認（売掛先別の滞留期間）&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;売掛金&quot; data-part=&quot;line&quot;&gt;売掛金は残高でなく、売掛先別の滞留期間を見る。古い債権が混じっていないか（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 D26">63,500</td><td class="yellow num">66,000</td><td class=""></td></tr><tr data-row="27"><td class="">棚卸資産</td><td class="num">38,000</td><td class="yellow num">44,000</td><td class="red num has-note" data-note="在庫が38,000→52,000千円（+36.8%）と積み上がる一方、売上は減少。買いだめ・滞留・売れない在庫が含まれる可能性。面談で確認（品目別の在庫と賞味期限）&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;在庫&quot; data-part=&quot;line&quot;&gt;在庫は金額でなく、品目別の滞留と評価の根拠を見る。賞味期限や品質で売れないものが混じっていないか（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 D27">52,000</td><td class="red num">55,000</td><td class=""></td></tr><tr data-row="28"><td class="">その他流動資産</td><td class="num">6,000</td><td class="num">6,500</td><td class="num">7,000</td><td class="num">7,500</td><td class=""></td></tr><tr data-row="29"><td class="b">流動資産</td><td class="b num">154,000</td><td class="b num">147,500</td><td class="b num">144,500</td><td class="b num">138,000</td><td class="b"></td></tr><tr data-row="30"><td class="">有形固定資産</td><td class="num">152,000</td><td class="num">145,000</td><td class="num">128,000</td><td class="num">123,000</td><td class=""></td></tr><tr data-row="31"><td class="">保険積立金等</td><td class="num">14,000</td><td class="num">14,500</td><td class="num">15,000</td><td class="num">15,200</td><td class=""></td></tr><tr data-row="32"><td class="">役員貸付金</td><td class="num">3,000</td><td class="yellow num">6,000</td><td class="red num has-note" data-note="役員貸付金が3,000→6,000→9,500→11,000千円と毎期増加。社長個人への資金流出の可能性。使途と回収の見込みを面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;役員貸付金&quot; data-part=&quot;line&quot;&gt;役員貸付金は、増えた経緯と返済の見込みを確かめ、個人資産との関係も見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 D32">9,500</td><td class="red num">11,000</td><td class=""></td></tr><tr data-row="33"><td class="b">総資産</td><td class="b num">323,000</td><td class="b num">313,000</td><td class="b num">297,000</td><td class="b num">287,200</td><td class="b"></td></tr><tr data-row="34"><td class="">買掛金</td><td class="num">41,000</td><td class="num">42,500</td><td class="num">46,000</td><td class="num">49,000</td><td class=""></td></tr><tr data-row="35"><td class="">未払金</td><td class="num">8,000</td><td class="yellow num">9,500</td><td class="yellow num">12,000</td><td class="red num has-note" data-note="未払金が8,000→14,500千円（+81.2%）。税金・社会保険料などの支払の遅れの可能性（ヒアリングで社保の遅れあり）。内訳を面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;未払金&quot; data-part=&quot;line&quot;&gt;未払金の増加は、税金・社会保険料・仕入以外の支払の先送りがないか内訳を見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E35">14,500</td><td class=""></td></tr><tr data-row="36"><td class="">短期借入金</td><td class="num">20,000</td><td class="yellow num">30,000</td><td class="red num has-note" data-note="短期借入金が20,000→40,000→55,000千円。赤字の穴埋めに短期借入（当座貸越）で運転資金をつないでいる可能性。期限（2027/3）の更新見通しを面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;短期借入&quot; data-part=&quot;line&quot;&gt;短期借入や当座貸越が増えているときは、赤字の穴埋めに使われていないか、期限と更新の見通しを見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 D36">40,000</td><td class="red num">55,000</td><td class=""></td></tr><tr data-row="37"><td class="">その他負債</td><td class="num">9,000</td><td class="num">9,000</td><td class="num">9,740</td><td class="num">7,940</td><td class=""></td></tr><tr data-row="38"><td class="b">流動負債</td><td class="b num">78,000</td><td class="b num">91,000</td><td class="b num">107,740</td><td class="b num">126,440</td><td class="b"></td></tr><tr data-row="39"><td class="">長期借入金</td><td class="num">180,000</td><td class="num">168,170</td><td class="num">155,000</td><td class="num">150,000</td><td class=""></td></tr><tr data-row="40"><td class="b">負債合計</td><td class="b num">258,000</td><td class="b num">259,170</td><td class="b num">262,740</td><td class="b num">276,440</td><td class="b"></td></tr><tr data-row="41"><td class="">資本金</td><td class="num">10,000</td><td class="num">10,000</td><td class="num">10,000</td><td class="num">10,000</td><td class=""></td></tr><tr data-row="42"><td class="">利益剰余金</td><td class="num">55,000</td><td class="num">43,830</td><td class="num">24,260</td><td class="num">760</td><td class=""></td></tr><tr data-row="43"><td class="b">純資産</td><td class="b num">65,000</td><td class="b num">53,830</td><td class="b num">34,260</td><td class="b num">10,760</td><td class="b"></td></tr><tr data-row="44"><td class="b">負債・純資産合計</td><td class="b num">323,000</td><td class="b num">313,000</td><td class="b num">297,000</td><td class="b num">287,200</td><td class="b"></td></tr><tr data-row="45"><td class="head2 b">C. 損益計算書（第24期は8か月。右端に年換算）</td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="46"><td class="">売上高</td><td class="num">520,000</td><td class="yellow num">498,000</td><td class="yellow num has-note" data-note="売上が520,000→498,000→471,000千円（2期で-9.4%）と減少。主要取引先の仕入れ見直しの話もあり、減少が続く可能性。面談で確認（取引先別・月別の売上）&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;取引先集中&quot; data-part=&quot;line&quot;&gt;売上の大きな取引先は、取引条件と見直しの時期、失った場合の粗利への影響を見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 D46">471,000</td><td class="num">296,000</td><td class="yellow num">444,000</td></tr><tr data-row="47"><td class="">売上原価</td><td class="num">384,800</td><td class="num">378,500</td><td class="num">367,400</td><td class="num">233,800</td><td class="num">350,700</td></tr><tr data-row="48"><td class="b">売上総利益</td><td class="b num">135,200</td><td class="b num">119,500</td><td class="b num">103,600</td><td class="b num">62,200</td><td class="b num">93,300</td></tr><tr data-row="49"><td class="">販管費</td><td class="num">128,000</td><td class="num">126,500</td><td class="num">124,800</td><td class="num">82,400</td><td class="num">123,600</td></tr><tr data-row="50"><td class="">　うち減価償却費</td><td class="num">9,000</td><td class="num">8,600</td><td class="num">8,200</td><td class="num">5,300</td><td class="num">7,950</td></tr><tr data-row="51"><td class="">　うち役員報酬</td><td class="num">12,000</td><td class="num">12,000</td><td class="num">12,000</td><td class="num">8,000</td><td class="num">12,000</td></tr><tr data-row="52"><td class="b">営業利益</td><td class="b num">7,200</td><td class="red b num neg has-note" data-note="営業利益が第21期7,200千円から第22期-7,000千円へ赤字転落し、以降も赤字が拡大。本業で赤字の可能性。面談で確認" data-where="財務分析 C52">-7,000</td><td class="red b num neg">-21,200</td><td class="red b num neg">-20,200</td><td class="red b num neg">-30,300</td></tr><tr data-row="53"><td class="">営業外収益</td><td class="num">1,200</td><td class="num">1,100</td><td class="num">2,800</td><td class="num">600</td><td class="num">900</td></tr><tr data-row="54"><td class="">支払利息</td><td class="num">4,800</td><td class="num">5,200</td><td class="num">5,600</td><td class="num">3,900</td><td class="num">5,850</td></tr><tr data-row="55"><td class="b">経常利益</td><td class="b num">3,600</td><td class="b num neg">-11,100</td><td class="b num neg">-24,000</td><td class="b num neg">-23,500</td><td class="b num neg">-35,250</td></tr><tr data-row="56"><td class="">特別利益</td><td class="num">0</td><td class="num">0</td><td class="num">4,500</td><td class="num">0</td><td class="num">0</td></tr><tr data-row="57"><td class="">税引前利益</td><td class="num">3,600</td><td class="num neg">-11,100</td><td class="num neg">-19,500</td><td class="num neg">-23,500</td><td class="num neg">-35,250</td></tr><tr data-row="58"><td class="">法人税等</td><td class="num">1,100</td><td class="num">70</td><td class="num">70</td><td class="num">0</td><td class="num">0</td></tr><tr data-row="59"><td class="b">当期純利益</td><td class="b num">2,500</td><td class="b num neg">-11,170</td><td class="b num neg">-19,570</td><td class="b num neg">-23,500</td><td class="b num neg">-35,250</td></tr><tr data-row="60"><td class="head2 b">D. 指標</td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="61"><td class="">売上総利益率</td><td class="num">26.0%</td><td class="yellow num">24.0%</td><td class="red num has-note" data-note="売上総利益率が26.0%→22.0%と4.0ポイント低下。原価高の価格転嫁の遅れ、値引き、ロスの増加などの可能性。面談で確認（品目別・取引先別の粗利）" data-where="財務分析 D61">22.0%</td><td class="red num">21.0%</td><td class="red num">21.0%</td></tr><tr data-row="62"><td class="">営業利益率</td><td class="num">1.4%</td><td class="num neg">-1.4%</td><td class="num neg">-4.5%</td><td class="num neg">-6.8%</td><td class="num neg">-6.8%</td></tr><tr data-row="63"><td class="b">償却前営業利益</td><td class="b num">16,200</td><td class="yellow b num">1,600</td><td class="red b num neg">-13,000</td><td class="red b num neg">-14,900</td><td class="red b num neg has-note" data-note="償却前営業利益が第23期-13,000千円、第24期は年換算-22,350千円。減価償却を除いても赤字で、返済原資が本業から出ていない可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;資金繰り&quot; data-part=&quot;line&quot;&gt;償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 F63">-22,350</td></tr><tr data-row="64"><td class="">自己資本比率</td><td class="num">20.1%</td><td class="yellow num">17.2%</td><td class="yellow num">11.5%</td><td class="red num has-note" data-note="自己資本比率が20.1%→3.7%。在庫や売掛金の評価損が出ると債務超過に近づく（または超える）可能性。面談で確認" data-where="財務分析 E64">3.7%</td><td class=""></td></tr><tr data-row="65"><td class="">流動比率</td><td class="num">197.4%</td><td class="num">162.1%</td><td class="num">134.1%</td><td class="yellow num">109.1%</td><td class=""></td></tr><tr data-row="66"><td class="">流動比率（一年内返済加味）</td><td class="">—</td><td class="">—</td><td class="">—</td><td class="red num has-note" data-note="流動比率は109%だが、貸借対照表では一年内返済の長期借入金が分かれていない。年間返済額31,200千円を流動負債に加えると88%で、100%を割る可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;借入一覧&quot; data-part=&quot;line&quot;&gt;借入一覧は、残高と貸借対照表の長短借入金が合うか、返済の実際の動きと保全（担保・保証）を並べて見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E66">87.5%</td><td class=""></td></tr><tr data-row="67"><td class="">月商（売上÷月数）</td><td class="num">43,333.3</td><td class="num">41,500</td><td class="num">39,250</td><td class="num">37,000</td><td class=""></td></tr><tr data-row="68"><td class="">借入金月商倍率</td><td class="yellow num">4.6倍</td><td class="yellow num">4.8倍</td><td class="yellow num">5.0倍</td><td class="red num has-note" data-note="有利子負債が月商の4.6倍→5.5倍に増加。月商の5倍超は過大な可能性。面談で確認" data-where="財務分析 E68">5.5倍</td><td class=""></td></tr><tr data-row="69"><td class="">債務償還年数</td><td class="yellow num">12.3年</td><td class="red num">123.9年</td><td class="red">返済原資なし</td><td class="red has-note" data-note="償却前営業利益が年換算でマイナスのため返済原資なし。第22期でも124年と、返済できる水準を大きく超えている可能性。返済条件の見直しが論点になる可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;資金繰り&quot; data-part=&quot;line&quot;&gt;償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E69">返済原資なし</td><td class=""></td></tr><tr data-row="70"><td class="">売掛金回転日数</td><td class="num">42.9日</td><td class="num">44.1日</td><td class="yellow num">48.5日</td><td class="red num has-note" data-note="売掛金回転日数が42.9日→53.5日と10.6日延びている。回収条件の悪化や古い債権の残存の可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;売掛金&quot; data-part=&quot;line&quot;&gt;売掛金は残高でなく、売掛先別の滞留期間を見る。古い債権が混じっていないか（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E70">53.5日</td><td class=""></td></tr><tr data-row="71"><td class="">棚卸資産回転日数</td><td class="num">35.6日</td><td class="yellow num">41.8日</td><td class="red num">51.0日</td><td class="red num has-note" data-note="棚卸資産回転日数が35.6日→56.5日。製造卸で在庫が重くなっている可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;在庫&quot; data-part=&quot;line&quot;&gt;在庫は金額でなく、品目別の滞留と評価の根拠を見る。賞味期限や品質で売れないものが混じっていないか（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E71">56.5日</td><td class=""></td></tr><tr data-row="72"><td class="">現預金月商比（か月）</td><td class="num">1.1か月</td><td class="num">0.9か月</td><td class="yellow num">0.6か月</td><td class="red num">0.3か月</td><td class=""></td></tr><tr data-row="73"><td class="">年間返済額（借入一覧の月返済×12）</td><td class="">—</td><td class="">—</td><td class="">—</td><td class="red num has-note" data-note="年間返済額31,200千円に対し、営業CF（年換算）は-30,750千円。返済を営業CFでは賄えず、手元資金か新規借入に頼る形の可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;借入一覧&quot; data-part=&quot;line&quot;&gt;借入一覧は、残高と貸借対照表の長短借入金が合うか、返済の実際の動きと保全（担保・保証）を並べて見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E73">31,200</td><td class=""></td></tr><tr data-row="74"><td class="">営業CF（年換算）</td><td class="">—</td><td class="num neg">-5,070</td><td class="num neg">-15,630</td><td class="num neg">-30,750</td><td class=""></td></tr><tr data-row="75"><td class="">返済後の手残り（償却前営業利益－利息－年間返済額）</td><td class="">—</td><td class="">—</td><td class="">—</td><td class="red num neg">-59,400</td><td class=""></td></tr><tr data-row="76"><td class="">現預金の持ち月数（概算）</td><td class="">—</td><td class="">—</td><td class="">—</td><td class="red num has-note" data-note="営業CFの月次赤字と月返済から、現預金が約1.8か月で尽きる計算（概算）。賞与・社会保険料の遅れ分は含まず、実際はさらに短い可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;資金繰り&quot; data-part=&quot;line&quot;&gt;償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E76">1.8か月</td><td class=""></td></tr><tr data-row="77"><td class="">債務償還年数＝有利子負債÷償却前営業利益（第24期は年換算）。マイナスなら「返済原資なし」。持ち月数＝現預金÷（営業CFの月次赤字＋月返済）。賞与・社保の遅れ分は含まない概算。</td><td class=""></td><td class=""></td><td class=""></td><td class=""></td><td class=""></td></tr></table></div><div class="sheet" data-sheet="before-フォロー記録"><table><colgroup><col style="width:6.1%"><col style="width:31.3%"><col style="width:31.3%"><col style="width:31.3%"></colgroup><tr data-row="1"><td class="b">フォロー記録　A社（架空）</td><td class=""></td><td class=""></td><td class=""></td></tr><tr data-row="2"><td class="">架空データ。仮説の下書き。再生の判断・銀行との交渉の方針は人が決める。</td><td class=""></td><td class=""></td><td class=""></td></tr><tr class="gap"><td colspan="4"></td></tr><tr data-row="4"><td class="head2 b">① 事前ヒアリング（解決したい問題点・ニーズ）</td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="5"><td class="head b">No</td><td class="head b">申告内容</td><td class="head b">財務の数字との関係</td><td class="head b"></td></tr><tr data-row="6"><td class="num">1</td><td class="">来月（12月）の賞与と年末の支払いが不安。手元資金が1,000万円を切った</td><td class="">現預金9,500千円、月商の0.26か月分。営業CFの月次赤字と月返済から約1.8か月（概算）</td><td class=""></td></tr><tr data-row="7"><td class="num">2</td><td class="">金融機関2（銀行）に追加の融資を相談したが、決算を見てからと言われ止まっている</td><td class="">短期借入金が20,000→55,000千円で、すでに借入が積み上がっている</td><td class=""></td></tr><tr data-row="8"><td class="num">3</td><td class="">主要取引先のスーパー1社（売上の約3割）が来年から仕入れ先を見直すと聞いた</td><td class="">売上は2期で-9.4%。年換算売上の3割は約133,200千円</td><td class=""></td></tr><tr data-row="9"><td class="num">4</td><td class="">社会保険料の支払いを2か月遅らせている</td><td class="">未払金が8,000→14,500千円。社保の遅れが含まれる可能性</td><td class=""></td></tr><tr data-row="10"><td class="num">5</td><td class="">息子（専務）に継がせたいが、借入の保証が心配で本人が迷っている</td><td class="">借入一覧の社長保証付き：金融機関1（信用金庫・架空）・金融機関3（公庫）</td><td class=""></td></tr><tr class="gap"><td colspan="4"></td></tr><tr data-row="12"><td class="head2 b">② 質問するポイント（財務分析シートを踏まえて）</td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="13"><td class="head b">No</td><td class="head b">質問</td><td class="head b">数字の根拠</td><td class="head b">知見の帳簿の見方（出所つき）</td></tr><tr data-row="14"><td class="num">1</td><td class="">12月の賞与と年末の支払に、手元資金で足りるか。賞与額・支払予定日・足りない場合の手当てはあるか</td><td class="">現預金9,500千円（月商の0.26か月）。営業CFの月次赤字と月返済から約1.8か月分（概算）</td><td class=""><span class="lg" data-key="資金繰り" data-part="line">償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="15"><td class="num">2</td><td class="">当座貸越55,000千円（期限2027/3）の更新見通しは。追加融資の相談が止まっている理由は何と言われたか</td><td class="">短期借入金 20,000→55,000千円。決算を見てからと言われ止まっている（ヒアリング）</td><td class=""><span class="lg" data-key="短期借入" data-part="line">短期借入や当座貸越が増えているときは、赤字の穴埋めに使われていないか、期限と更新の見通しを見る（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="16"><td class="num">3</td><td class="">売上の約3割を占めるスーパーとの取引条件と、見直しの時期・条件は。失った場合の粗利の減り方は</td><td class="">売上 520,000→471,000千円（-9.4%）。年換算売上444,000千円の3割は約133,200千円</td><td class=""><span class="lg" data-key="取引先集中" data-part="line">売上の大きな取引先は、取引条件と見直しの時期、失った場合の粗利への影響を見る（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="17"><td class="num">4</td><td class="">売上総利益率の低下は、原材料高・値引き・ロスのどれが大きいか。値上げの価格転嫁はどこまで進んでいるか</td><td class="">売上総利益率 26.0%→21.0%。営業利益は第22期から赤字</td><td class=""></td></tr><tr data-row="18"><td class="num">5</td><td class="">在庫が増えた理由は何か。賞味期限が近いもの、売れる見込みの薄いものはどれだけあるか</td><td class="">棚卸資産 38,000→55,000千円。回転日数35.6→56.5日</td><td class=""><span class="lg" data-key="在庫" data-part="line">在庫は金額でなく、品目別の滞留と評価の根拠を見る。賞味期限や品質で売れないものが混じっていないか（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="19"><td class="num">6</td><td class="">売上が減っているのに売掛金が増えている理由は。回収が遅れている先、古い債権はあるか</td><td class="">売掛金 61,000→63,500千円（売上は-5.4%）。回転日数42.9→53.5日</td><td class=""><span class="lg" data-key="売掛金" data-part="line">売掛金は残高でなく、売掛先別の滞留期間を見る。古い債権が混じっていないか（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="20"><td class="num">7</td><td class="">役員貸付金は何の資金か。返済の見込みと、これ以上増やさない手立てはあるか</td><td class="">役員貸付金 3,000→11,000千円。第24期の役員報酬は8か月で8,000千円</td><td class=""><span class="lg" data-key="役員貸付金" data-part="line">役員貸付金は、増えた経緯と返済の見込みを確かめ、個人資産との関係も見る（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="21"><td class="num">8</td><td class="">社会保険料を2か月遅らせている分の金額と、年金事務所への相談状況は。税金の滞納はないか</td><td class="">未払金 8,000→14,500千円（+81.2%）。社会保険料の支払を2か月遅らせている（ヒアリング）</td><td class=""><span class="lg" data-key="未払金" data-part="line">未払金の増加は、税金・社会保険料・仕入以外の支払の先送りがないか内訳を見る（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="22"><td class="num">9</td><td class="">借入一覧の月返済は実際に払えているか。長期借入金の動きが返済予定と合わない理由は。条件変更の相談歴はあるか</td><td class="">月返済合計2,600千円（年31,200千円）。第23期の長期借入金の減少は13,170千円のみ</td><td class=""><span class="lg" data-key="借入一覧" data-part="line">借入一覧は、残高と貸借対照表の長短借入金が合うか、返済の実際の動きと保全（担保・保証）を並べて見る（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="23"><td class="num">10</td><td class="">専務への承継の意思と時期は。社長保証の対象となっている借入と、保証の外し方についての考えは</td><td class="">借入一覧で社長保証付き：金融機関1（信用金庫・架空）（長期・設備）・金融機関3（公庫）（長期・運転）。専務は保証が心配で迷っている（ヒアリング）</td><td class=""></td></tr><tr class="gap"><td colspan="4"></td></tr><tr data-row="25"><td class="head2 b">③ 問題解決の方向性（仮説・断定しない）</td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="26"><td class="head b">No</td><td class="head b">方向性</td><td class="head b">根拠となる数字</td><td class="head b">留意点</td></tr><tr data-row="27"><td class="num">1</td><td class="">返済条件の見直し（リスケ）を軸に、資金繰りを安定させる</td><td class="">償却前営業利益は年換算-22,350千円、年間返済額31,200千円、現預金9,500千円。返済原資が本業から出ていない</td><td class="">金融機関ごとに保全（担保・保証協会・保証）が違い、足並みが論点。方針と交渉は人が決める</td></tr><tr data-row="28"><td class="num">2</td><td class="">在庫・売掛金・遊休資産を圧縮して現金化する</td><td class="">棚卸資産回転日数35.6→56.5日、売掛金回転日数42.9→53.5日。固定資産の使用状況も確認の余地</td><td class="">売れない在庫や回収見込みの薄い債権は、現金化でなく評価損・償却として扱う可能性。面談で実態を確認</td></tr><tr data-row="29"><td class="num">3</td><td class="">役員貸付金を整理する（返済計画、または役員報酬との整理）</td><td class="">役員貸付金3,000→11,000千円。自己資本比率3.7%</td><td class="">回収できないと見る場合は純資産への影響が出る。社長個人の資産・負債との整理が必要になる可能性</td></tr><tr data-row="30"><td class="num">4</td><td class="">取引先集中への対応（条件の維持と代替の販路）</td><td class="">主要取引先は売上の約3割（年換算で約133,200千円）。売上は2期で-9.4%</td><td class="">値上げ受け入れで継続できるなら、失う場合との粗利の比較が材料になる。条件の詳細は面談で確認</td></tr><tr data-row="31"><td class="num">5</td><td class="">後継と経営者保証の整理（承継の可否と保証の扱いを計画に織り込む）</td><td class="">専務は保証が心配で迷っている（ヒアリング）。社長保証付きの借入が借入一覧にある</td><td class="">保証の扱いは金融機関との合意事項。承継の意思・時期の確認が先</td></tr><tr class="gap"><td colspan="4"></td></tr><tr data-row="33"><td class="head2 b">④ 面談後に分かったこと（面談後に議事録から更新）</td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="34"><td class="head b">No</td><td class="head b">議事録の内容</td><td class="head b">数字・分析への反映</td><td class="head b">影響（仮置き）</td></tr><tr data-row="35"><td class=""></td><td class="">（面談後に記入）</td><td class=""></td><td class=""></td></tr><tr class="gap"><td colspan="4"></td></tr><tr data-row="37"><td class="head2 b">反映した知見の帳簿の行</td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="38"><td class="head b">キー</td><td class="head b">見方</td><td class="head b">出所</td><td class="head b"></td></tr><tr data-row="39"><td class="">役員貸付金</td><td class=""><span class="lg" data-key="役員貸付金" data-part="text">役員貸付金は、増えた経緯と返済の見込みを確かめ、個人資産との関係も見る</span></td><td class=""><span class="lg" data-key="役員貸付金" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr><tr data-row="40"><td class="">売掛金</td><td class=""><span class="lg" data-key="売掛金" data-part="text">売掛金は残高でなく、売掛先別の滞留期間を見る。古い債権が混じっていないか</span></td><td class=""><span class="lg" data-key="売掛金" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr><tr data-row="41"><td class="">在庫</td><td class=""><span class="lg" data-key="在庫" data-part="text">在庫は金額でなく、品目別の滞留と評価の根拠を見る。賞味期限や品質で売れないものが混じっていないか</span></td><td class=""><span class="lg" data-key="在庫" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr><tr data-row="42"><td class="">未払金</td><td class=""><span class="lg" data-key="未払金" data-part="text">未払金の増加は、税金・社会保険料・仕入以外の支払の先送りがないか内訳を見る</span></td><td class=""><span class="lg" data-key="未払金" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr><tr data-row="43"><td class="">短期借入</td><td class=""><span class="lg" data-key="短期借入" data-part="text">短期借入や当座貸越が増えているときは、赤字の穴埋めに使われていないか、期限と更新の見通しを見る</span></td><td class=""><span class="lg" data-key="短期借入" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr><tr data-row="44"><td class="">資金繰り</td><td class=""><span class="lg" data-key="資金繰り" data-part="text">償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる</span></td><td class=""><span class="lg" data-key="資金繰り" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr><tr data-row="45"><td class="">取引先集中</td><td class=""><span class="lg" data-key="取引先集中" data-part="text">売上の大きな取引先は、取引条件と見直しの時期、失った場合の粗利への影響を見る</span></td><td class=""><span class="lg" data-key="取引先集中" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr><tr data-row="46"><td class="">借入一覧</td><td class=""><span class="lg" data-key="借入一覧" data-part="text">借入一覧は、残高と貸借対照表の長短借入金が合うか、返済の実際の動きと保全（担保・保証）を並べて見る</span></td><td class=""><span class="lg" data-key="借入一覧" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr></table></div></div>
+</section>
+
+<section id="st4" class="locked">
+  <div class="no">4</div>
+  <h2>道家様の声で、1つ直す</h2>
+  <p>「この所見は、道家様ならどう書かれますか」。お聞きした言葉を、そのまま下に入れて「もう一度動かす」を押します。</p>
+  <div class="form">
+    <label for="key">直す見方</label>
+    <select id="key"></select>
+    <label for="cur">いまの帳簿の行</label>
+    <input id="cur" readonly>
+    <label for="txt">道家様の言葉</label>
+    <textarea id="txt" placeholder="例：役員貸付金は、まず社長個人の何に使ったかを最初に聞く"></textarea>
+    <span></span>
+    <div><button class="btn" id="apply">帳簿に入れて、もう一度動かす</button>
+      <button class="btn ghost" id="reset" type="button">最初の状態に戻す</button></div>
+  </div>
+  <div class="result" id="result"></div>
+  <h3>知見の帳簿（いまの中身）</h3>
+  <table class="ledger"><thead><tr><th>見る場所</th><th>見方（1行）</th><th>出所</th></tr></thead><tbody id="ledger"></tbody></table>
+  <p class="note">初期値は一般的な再生実務の見方で、道家様の見方ではありません。直していただくたびに「出所：道家様」の行に置き換わり、次の案件からも効きます。</p>
+</section>
+
+<section id="cmp" class="wide" style="display:none">
+  <div class="no">4の続き</div>
+  <h2>入れる前と、入れた後を並べる</h2>
+  <p>左が分身の最初の下書き、右が道家様の言葉を帳簿に入れて、もう一度動かした後です。右の黄色い所が変わった所です。左右は一緒に上下します。</p>
+  <div class="cmp-tabs" id="cmpTabs"></div>
+  <div class="panes">
+    <div class="pane pane-l"><h3>入れる前（初期値の見方）</h3><div id="paneL"></div></div>
+    <div class="pane pane-r"><h3>入れた後（道家様の見方）</h3><div id="paneR"></div></div>
+  </div>
+  <h3>変わった所の一覧</h3>
+  <table class="diff"><thead><tr><th>場所</th><th>入れる前</th><th>入れた後</th></tr></thead><tbody id="diffBody"></tbody></table>
+  <p class="note">数字は変わりません。変わるのは「どこを見て、何を聞くか」という見方です。この1行は、次の案件からも効きます。</p>
+</section>
+
+<section id="st5" class="locked">
+  <div class="no">5</div>
+  <h2>面談のあと：議事録から、所見の更新と再生方針の下書き</h2>
+  <div class="flowline"><span>AI議事録</span><span>→ 固有名詞を伏せる</span><span>→ フォロー記録④と所見を更新</span><span>→ 再生方針の下書き</span><span>→ <b>道家様が見ながら直す</b></span></div>
+  <h3>面談後の資料（フォロー記録の④「面談後に分かったこと」が埋まります）</h3>
+  <div class="book" id="book-after"><div class="tabs"><button class="tab" data-book="after" data-target="after-顧客マスター">1. 顧客マスター</button><button class="tab" data-book="after" data-target="after-財務分析">2. 財務分析</button><button class="tab" data-book="after" data-target="after-フォロー記録">3. フォロー記録</button></div><div class="sheet" data-sheet="after-顧客マスター"><table><colgroup><col style="width:29.9%"><col style="width:11.7%"><col style="width:11.7%"><col style="width:11.7%"><col style="width:9.1%"><col style="width:26.0%"></colgroup><tr data-row="1"><td class="b">顧客マスター　A社（架空）</td><td class=""></td><td class=""></td><td class=""></td><td class=""></td><td class=""></td></tr><tr data-row="2"><td class="">架空データ。固有名詞は伏せ字（対応表は別ファイル）。分身の下書き。</td><td class=""></td><td class=""></td><td class=""></td><td class=""></td><td class=""></td></tr><tr class="gap"><td colspan="6"></td></tr><tr data-row="4"><td class="head2 b">① 顧客概要</td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="5"><td class="b">業種</td><td class="" colspan="5">惣菜・弁当の製造卸（スーパー向け）</td></tr><tr data-row="6"><td class="b">所在地</td><td class="" colspan="5">（所在地は伏せ）</td></tr><tr data-row="7"><td class="b">創業</td><td class="" colspan="5">1998年</td></tr><tr data-row="8"><td class="b">従業員</td><td class="" colspan="5">正社員28名・パート46名</td></tr><tr data-row="9"><td class="b">代表者</td><td class="" colspan="5">A氏（架空・62歳）</td></tr><tr data-row="10"><td class="b">決算月</td><td class="" colspan="5">3月</td></tr><tr data-row="11"><td class="b">直近決算（第23期）の売上高</td><td class="" colspan="5">471,000千円（第21期比 -9.4%）</td></tr><tr data-row="12"><td class="b">直近決算（第23期）の当期純利益</td><td class="" colspan="5">-19,570千円</td></tr><tr data-row="13"><td class="b">最新（第24期・8か月）の総資産／純資産</td><td class="" colspan="5">287,200千円 ／ 10,760千円（自己資本比率 3.7%）</td></tr><tr data-row="14"><td class="b">最新の有利子負債／月商</td><td class="" colspan="5">205,000千円 ／ 37,000千円（5.5倍）</td></tr><tr class="gap"><td colspan="6"></td></tr><tr data-row="16"><td class="head2 b">② 未払金・借入金の状況</td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="17"><td class="head b">未払金（千円）</td><td class="head b">第21期(2024/3)</td><td class="head b">第22期(2025/3)</td><td class="head b">第23期(2026/3)</td><td class="head b">第24期 試算表(2026/11・8か月)</td><td class="head b"></td></tr><tr data-row="18"><td class="">未払金残高</td><td class="num">8,000</td><td class="yellow num">9,500</td><td class="yellow num">12,000</td><td class="red num">14,500</td><td class=""></td></tr><tr data-row="19"><td class="">ヒアリングの申告</td><td class="yellow" colspan="5">社会保険料の支払を2か月遅らせている（未確認・面談で金額と相談状況を聞く）</td></tr><tr class="gap"><td colspan="6"></td></tr><tr data-row="21"><td class="head b">借入先</td><td class="head b">種類</td><td class="head b">残高（千円）</td><td class="head b">月返済（千円）</td><td class="head b">金利</td><td class="head b">保全</td></tr><tr data-row="22"><td class="">金融機関1（信用金庫・架空）</td><td class="">長期・設備</td><td class="num">70,000</td><td class="num">1,200</td><td class="">1.6%</td><td class="yellow">工場土地建物に根抵当・社長保証</td></tr><tr data-row="23"><td class="">金融機関2（銀行・架空）</td><td class="">長期・運転</td><td class="num">60,000</td><td class="num">1,000</td><td class="">1.9%</td><td class="">保証協会付き</td></tr><tr data-row="24"><td class="">金融機関3（公庫）</td><td class="">長期・運転</td><td class="num">20,000</td><td class="num">400</td><td class="">1.2%</td><td class="yellow">無担保・社長保証</td></tr><tr data-row="25"><td class="yellow">金融機関2（銀行・架空）</td><td class="yellow">当座貸越</td><td class="yellow num has-note" data-note="短期の借入（当座貸越）が借入残高の約27%。期限の更新が止まると資金繰りに直結する可能性。更新の見通しを面談で確認" data-where="顧客マスター C25">55,000</td><td class="yellow num">0</td><td class="yellow">2.4%</td><td class="yellow">保証協会付き・期限2027/3</td></tr><tr data-row="26"><td class="b">合計</td><td class=""></td><td class="b num">205,000</td><td class="b num">2,600</td><td class=""></td><td class=""></td></tr><tr class="gap"><td colspan="6"></td></tr><tr data-row="28"><td class="head2 b">③ 特筆事項</td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="29"><td class="" colspan="6">・営業赤字が第22期から3期続き、償却前でも赤字（第24期は年換算-22,350千円）</td></tr><tr data-row="30"><td class="" colspan="6">・現預金9,500千円。12月の賞与・年末の支払が不安との申告</td></tr><tr data-row="31"><td class="" colspan="6">・社会保険料の支払を2か月遅らせている（ヒアリング）。未払金は14,500千円</td></tr><tr data-row="32"><td class="" colspan="6">・役員貸付金11,000千円、在庫55,000千円、売掛金66,000千円が膨らんでいる</td></tr><tr data-row="33"><td class="" colspan="6">・主要取引先のスーパー1社（売上の約3割）が来年から仕入れ先を見直す可能性（伝聞。面談で確認）</td></tr><tr data-row="34"><td class="" colspan="6">・後継（専務）の承継と社長保証の扱いが未整理</td></tr></table></div><div class="sheet" data-sheet="after-財務分析"><table><colgroup><col style="width:35.1%"><col style="width:13.0%"><col style="width:13.0%"><col style="width:13.0%"><col style="width:13.0%"><col style="width:13.0%"></colgroup><tr data-row="1"><td class="b">財務分析シート　A社（架空）（単位：千円）</td><td class=""></td><td class=""></td><td class=""></td><td class=""></td><td class=""></td></tr><tr data-row="2"><td class="">架空データ。色：薄赤＝悪化／薄黄＝注意。セルのコメントに所見（断定せず、面談で確認する前提）。分身の下書き。</td><td class=""></td><td class=""></td><td class=""></td><td class=""></td><td class=""></td></tr><tr data-row="3"><td class="">第24期は8か月の試算表。CFは貸借対照表の増減から間接法で計算（第21期は前期が無く計算不可）。年換算＝×12/8。</td><td class=""></td><td class=""></td><td class=""></td><td class=""></td><td class=""></td></tr><tr data-row="4"><td class="head b">科目</td><td class="head b">第21期(2024/3)</td><td class="head b">第22期(2025/3)</td><td class="head b">第23期(2026/3)</td><td class="head b">第24期 試算表(2026/11・8か月)</td><td class="head b">第24期 年換算<br>（×12/8）</td></tr><tr data-row="5"><td class="head2 b">A. キャッシュフロー計算書（間接法）</td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="6"><td class="">当期純利益</td><td class="">—</td><td class="num neg">-11,170</td><td class="num neg">-19,570</td><td class="num neg">-23,500</td><td class=""></td></tr><tr data-row="7"><td class="">減価償却費</td><td class="">—</td><td class="num">8,600</td><td class="num">8,200</td><td class="num">5,300</td><td class=""></td></tr><tr data-row="8"><td class="">売上債権の増減</td><td class="">—</td><td class="num">1,000</td><td class="num neg">-2,500</td><td class="num neg">-2,500</td><td class=""></td></tr><tr data-row="9"><td class="">棚卸資産の増減</td><td class="">—</td><td class="num neg">-6,000</td><td class="num neg">-8,000</td><td class="num neg">-3,000</td><td class=""></td></tr><tr data-row="10"><td class="">その他流動資産の増減</td><td class="">—</td><td class="num neg">-500</td><td class="num neg">-500</td><td class="num neg">-500</td><td class=""></td></tr><tr data-row="11"><td class="">仕入債務の増減</td><td class="">—</td><td class="num">1,500</td><td class="num">3,500</td><td class="num">3,000</td><td class=""></td></tr><tr data-row="12"><td class="">未払金の増減</td><td class="">—</td><td class="num">1,500</td><td class="num">2,500</td><td class="num">2,500</td><td class=""></td></tr><tr data-row="13"><td class="">その他負債の増減</td><td class="">—</td><td class="num">0</td><td class="num">740</td><td class="num neg">-1,800</td><td class=""></td></tr><tr data-row="14"><td class="b">営業CF</td><td class="b">—</td><td class="red b num neg has-note" data-note="営業CFが-5,070→-15,630→-20,500千円（第24期は8か月）と3期連続マイナス。本業の資金が出ていない可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;資金繰り&quot; data-part=&quot;line&quot;&gt;償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 C14">-5,070</td><td class="red b num neg">-15,630</td><td class="red b num neg">-20,500</td><td class="b"></td></tr><tr data-row="15"><td class="">設備投資等（固定資産増減＋償却）</td><td class="">—</td><td class="num neg">-1,600</td><td class="num">8,800</td><td class="num neg">-300</td><td class=""></td></tr><tr data-row="16"><td class="">保険積立金等の増減</td><td class="">—</td><td class="num neg">-500</td><td class="num neg">-500</td><td class="num neg">-200</td><td class=""></td></tr><tr data-row="17"><td class="">役員貸付金の増減</td><td class="">—</td><td class="num neg">-3,000</td><td class="num neg">-3,500</td><td class="num neg">-1,500</td><td class=""></td></tr><tr data-row="18"><td class="b">投資CF</td><td class="b">—</td><td class="b num neg">-5,100</td><td class="yellow b num has-note" data-note="第23期は固定資産の減少が償却を上回り、投資CFがプラス（4,800千円）。資産の売却等があった可能性（特別利益4,500千円との関係も）。面談で確認" data-where="財務分析 D18">4,800</td><td class="b num neg">-2,000</td><td class="b"></td></tr><tr data-row="19"><td class="b">フリーCF</td><td class="b">—</td><td class="red b num neg">-10,170</td><td class="red b num neg">-10,830</td><td class="red b num neg">-22,500</td><td class="b"></td></tr><tr data-row="20"><td class="">短期借入金の増減</td><td class="">—</td><td class="num">10,000</td><td class="num">10,000</td><td class="num">15,000</td><td class=""></td></tr><tr data-row="21"><td class="">長期借入金の増減</td><td class="">—</td><td class="num neg">-11,830</td><td class="yellow num neg has-note" data-note="長期借入金の減少は13,170千円で、借入一覧の月返済合計×12＝31,200千円より小さい。新規の長期借入や借換えがあった可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;借入一覧&quot; data-part=&quot;line&quot;&gt;借入一覧は、残高と貸借対照表の長短借入金が合うか、返済の実際の動きと保全（担保・保証）を並べて見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 D21">-13,170</td><td class="num neg">-5,000</td><td class=""></td></tr><tr data-row="22"><td class="b">財務CF</td><td class="b">—</td><td class="b num neg">-1,830</td><td class="b num neg">-3,170</td><td class="yellow b num has-note" data-note="営業CFがマイナスの中で財務CFがプラス（10,000千円）。借入でつないでいる可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;短期借入&quot; data-part=&quot;line&quot;&gt;短期借入や当座貸越が増えているときは、赤字の穴埋めに使われていないか、期限と更新の見通しを見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E22">10,000</td><td class="b"></td></tr><tr data-row="23"><td class="b">現預金の増減</td><td class="b">—</td><td class="b num neg">-12,000</td><td class="b num neg">-14,000</td><td class="b num neg">-12,500</td><td class="b"></td></tr><tr data-row="24"><td class="head2 b">B. 貸借対照表</td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="25"><td class="">現金預金</td><td class="num">48,000</td><td class="num">36,000</td><td class="yellow num">22,000</td><td class="red num has-note" data-note="現預金が48,000→9,500千円。月商の0.26か月分で、12月の賞与・年末の支払に足りるか懸念。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;資金繰り&quot; data-part=&quot;line&quot;&gt;償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E25">9,500</td><td class=""></td></tr><tr data-row="26"><td class="">売掛金</td><td class="num">62,000</td><td class="num">61,000</td><td class="red num has-note" data-note="売上が減っている（-5.4%）のに売掛金が増えている（+4.1%）。回収の遅れ、または回収見込みの薄い債権が混じっている可能性。面談で確認（売掛先別の滞留期間）&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;売掛金&quot; data-part=&quot;line&quot;&gt;売掛金は残高でなく、売掛先別の滞留期間を見る。古い債権が混じっていないか（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 D26">63,500</td><td class="yellow num has-note" data-note="【面談で判明】約6,000千円は2年前に取引を止めた先の未回収。回収見込みは薄い可能性。除くと回転日数は約48.6日" data-where="財務分析 E26">66,000</td><td class=""></td></tr><tr data-row="27"><td class="">棚卸資産</td><td class="num">38,000</td><td class="yellow num">44,000</td><td class="red num has-note" data-note="在庫が38,000→52,000千円（+36.8%）と積み上がる一方、売上は減少。買いだめ・滞留・売れない在庫が含まれる可能性。面談で確認（品目別の在庫と賞味期限）&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;在庫&quot; data-part=&quot;line&quot;&gt;在庫は金額でなく、品目別の滞留と評価の根拠を見る。賞味期限や品質で売れないものが混じっていないか（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 D27">52,000</td><td class="red num has-note" data-note="【面談で判明】約8,000千円は賞味期限が近く売れる見込みが薄いとの話。評価損の可能性。増えた理由は値上げ前の買いだめ" data-where="財務分析 E27">55,000</td><td class=""></td></tr><tr data-row="28"><td class="">その他流動資産</td><td class="num">6,000</td><td class="num">6,500</td><td class="num">7,000</td><td class="num">7,500</td><td class=""></td></tr><tr data-row="29"><td class="b">流動資産</td><td class="b num">154,000</td><td class="b num">147,500</td><td class="b num">144,500</td><td class="b num">138,000</td><td class="b"></td></tr><tr data-row="30"><td class="">有形固定資産</td><td class="num">152,000</td><td class="num">145,000</td><td class="num">128,000</td><td class="yellow num has-note" data-note="【面談で判明】工場の第2ラインの稼働率は40%。売却・賃貸の話は来ていない。遊休に近い可能性" data-where="財務分析 E30">123,000</td><td class=""></td></tr><tr data-row="31"><td class="">保険積立金等</td><td class="num">14,000</td><td class="num">14,500</td><td class="num">15,000</td><td class="num">15,200</td><td class=""></td></tr><tr data-row="32"><td class="">役員貸付金</td><td class="num">3,000</td><td class="yellow num">6,000</td><td class="red num has-note" data-note="役員貸付金が3,000→6,000→9,500→11,000千円と毎期増加。社長個人への資金流出の可能性。使途と回収の見込みを面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;役員貸付金&quot; data-part=&quot;line&quot;&gt;役員貸付金は、増えた経緯と返済の見込みを確かめ、個人資産との関係も見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 D32">9,500</td><td class="red num has-note" data-note="【面談で判明】社長個人の住宅ローン返済の立替で、社長も認識あり。返済方法の整理が必要な可能性" data-where="財務分析 E32">11,000</td><td class=""></td></tr><tr data-row="33"><td class="b">総資産</td><td class="b num">323,000</td><td class="b num">313,000</td><td class="b num">297,000</td><td class="b num">287,200</td><td class="b"></td></tr><tr data-row="34"><td class="">買掛金</td><td class="num">41,000</td><td class="num">42,500</td><td class="num">46,000</td><td class="num">49,000</td><td class=""></td></tr><tr data-row="35"><td class="">未払金</td><td class="num">8,000</td><td class="yellow num">9,500</td><td class="yellow num">12,000</td><td class="red num has-note" data-note="未払金が8,000→14,500千円（+81.2%）。税金・社会保険料などの支払の遅れの可能性（ヒアリングで社保の遅れあり）。内訳を面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;未払金&quot; data-part=&quot;line&quot;&gt;未払金の増加は、税金・社会保険料・仕入以外の支払の先送りがないか内訳を見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E35">14,500</td><td class=""></td></tr><tr data-row="36"><td class="">短期借入金</td><td class="num">20,000</td><td class="yellow num">30,000</td><td class="red num has-note" data-note="短期借入金が20,000→40,000→55,000千円。赤字の穴埋めに短期借入（当座貸越）で運転資金をつないでいる可能性。期限（2027/3）の更新見通しを面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;短期借入&quot; data-part=&quot;line&quot;&gt;短期借入や当座貸越が増えているときは、赤字の穴埋めに使われていないか、期限と更新の見通しを見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 D36">40,000</td><td class="red num">55,000</td><td class=""></td></tr><tr data-row="37"><td class="">その他負債</td><td class="num">9,000</td><td class="num">9,000</td><td class="num">9,740</td><td class="num">7,940</td><td class=""></td></tr><tr data-row="38"><td class="b">流動負債</td><td class="b num">78,000</td><td class="b num">91,000</td><td class="b num">107,740</td><td class="b num">126,440</td><td class="b"></td></tr><tr data-row="39"><td class="">長期借入金</td><td class="num">180,000</td><td class="num">168,170</td><td class="num">155,000</td><td class="num">150,000</td><td class=""></td></tr><tr data-row="40"><td class="b">負債合計</td><td class="b num">258,000</td><td class="b num">259,170</td><td class="b num">262,740</td><td class="b num">276,440</td><td class="b"></td></tr><tr data-row="41"><td class="">資本金</td><td class="num">10,000</td><td class="num">10,000</td><td class="num">10,000</td><td class="num">10,000</td><td class=""></td></tr><tr data-row="42"><td class="">利益剰余金</td><td class="num">55,000</td><td class="num">43,830</td><td class="num">24,260</td><td class="num">760</td><td class=""></td></tr><tr data-row="43"><td class="b">純資産</td><td class="b num">65,000</td><td class="b num">53,830</td><td class="b num">34,260</td><td class="b num">10,760</td><td class="b"></td></tr><tr data-row="44"><td class="b">負債・純資産合計</td><td class="b num">323,000</td><td class="b num">313,000</td><td class="b num">297,000</td><td class="b num">287,200</td><td class="b"></td></tr><tr data-row="45"><td class="head2 b">C. 損益計算書（第24期は8か月。右端に年換算）</td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="46"><td class="">売上高</td><td class="num">520,000</td><td class="yellow num">498,000</td><td class="yellow num has-note" data-note="売上が520,000→498,000→471,000千円（2期で-9.4%）と減少。主要取引先の仕入れ見直しの話もあり、減少が続く可能性。面談で確認（取引先別・月別の売上）&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;取引先集中&quot; data-part=&quot;line&quot;&gt;売上の大きな取引先は、取引条件と見直しの時期、失った場合の粗利への影響を見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 D46">471,000</td><td class="num">296,000</td><td class="yellow num">444,000</td></tr><tr data-row="47"><td class="">売上原価</td><td class="num">384,800</td><td class="num">378,500</td><td class="num">367,400</td><td class="num">233,800</td><td class="num">350,700</td></tr><tr data-row="48"><td class="b">売上総利益</td><td class="b num">135,200</td><td class="b num">119,500</td><td class="b num">103,600</td><td class="b num">62,200</td><td class="b num">93,300</td></tr><tr data-row="49"><td class="">販管費</td><td class="num">128,000</td><td class="num">126,500</td><td class="num">124,800</td><td class="num">82,400</td><td class="num">123,600</td></tr><tr data-row="50"><td class="">　うち減価償却費</td><td class="num">9,000</td><td class="num">8,600</td><td class="num">8,200</td><td class="num">5,300</td><td class="num">7,950</td></tr><tr data-row="51"><td class="">　うち役員報酬</td><td class="num">12,000</td><td class="num">12,000</td><td class="num">12,000</td><td class="num has-note" data-note="【面談で判明】社長は役員報酬を半分にしてよいと発言（雇用は守りたい意向）" data-where="財務分析 E51">8,000</td><td class="num has-note" data-note="【面談で判明】半分にすると年6,000千円の改善。償却前営業利益の赤字を埋めるには足りない可能性" data-where="財務分析 F51">12,000</td></tr><tr data-row="52"><td class="b">営業利益</td><td class="b num">7,200</td><td class="red b num neg has-note" data-note="営業利益が第21期7,200千円から第22期-7,000千円へ赤字転落し、以降も赤字が拡大。本業で赤字の可能性。面談で確認" data-where="財務分析 C52">-7,000</td><td class="red b num neg">-21,200</td><td class="red b num neg">-20,200</td><td class="red b num neg">-30,300</td></tr><tr data-row="53"><td class="">営業外収益</td><td class="num">1,200</td><td class="num">1,100</td><td class="num">2,800</td><td class="num">600</td><td class="num">900</td></tr><tr data-row="54"><td class="">支払利息</td><td class="num">4,800</td><td class="num">5,200</td><td class="num">5,600</td><td class="num">3,900</td><td class="num">5,850</td></tr><tr data-row="55"><td class="b">経常利益</td><td class="b num">3,600</td><td class="b num neg">-11,100</td><td class="b num neg">-24,000</td><td class="b num neg">-23,500</td><td class="b num neg">-35,250</td></tr><tr data-row="56"><td class="">特別利益</td><td class="num">0</td><td class="num">0</td><td class="num">4,500</td><td class="num">0</td><td class="num">0</td></tr><tr data-row="57"><td class="">税引前利益</td><td class="num">3,600</td><td class="num neg">-11,100</td><td class="num neg">-19,500</td><td class="num neg">-23,500</td><td class="num neg">-35,250</td></tr><tr data-row="58"><td class="">法人税等</td><td class="num">1,100</td><td class="num">70</td><td class="num">70</td><td class="num">0</td><td class="num">0</td></tr><tr data-row="59"><td class="b">当期純利益</td><td class="b num">2,500</td><td class="b num neg">-11,170</td><td class="b num neg">-19,570</td><td class="b num neg">-23,500</td><td class="b num neg">-35,250</td></tr><tr data-row="60"><td class="head2 b">D. 指標</td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="61"><td class="">売上総利益率</td><td class="num">26.0%</td><td class="yellow num">24.0%</td><td class="red num has-note" data-note="売上総利益率が26.0%→22.0%と4.0ポイント低下。原価高の価格転嫁の遅れ、値引き、ロスの増加などの可能性。面談で確認（品目別・取引先別の粗利）" data-where="財務分析 D61">22.0%</td><td class="red num">21.0%</td><td class="red num has-note" data-note="【面談で判明】主要スーパーとの取引は値上げ交渉を受け入れれば続く見込みで、粗利は2ポイント低下。対象が当該取引先分か全社かは未確認" data-where="財務分析 F61">21.0%</td></tr><tr data-row="62"><td class="">営業利益率</td><td class="num">1.4%</td><td class="num neg">-1.4%</td><td class="num neg">-4.5%</td><td class="num neg">-6.8%</td><td class="num neg">-6.8%</td></tr><tr data-row="63"><td class="b">償却前営業利益</td><td class="b num">16,200</td><td class="yellow b num">1,600</td><td class="red b num neg">-13,000</td><td class="red b num neg">-14,900</td><td class="red b num neg has-note" data-note="償却前営業利益が第23期-13,000千円、第24期は年換算-22,350千円。減価償却を除いても赤字で、返済原資が本業から出ていない可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;資金繰り&quot; data-part=&quot;line&quot;&gt;償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 F63">-22,350</td></tr><tr data-row="64"><td class="">自己資本比率</td><td class="num">20.1%</td><td class="yellow num">17.2%</td><td class="yellow num">11.5%</td><td class="red num has-note" data-note="自己資本比率が20.1%→3.7%。在庫や売掛金の評価損が出ると債務超過に近づく（または超える）可能性。面談で確認" data-where="財務分析 E64">3.7%</td><td class=""></td></tr><tr data-row="65"><td class="">流動比率</td><td class="num">197.4%</td><td class="num">162.1%</td><td class="num">134.1%</td><td class="yellow num">109.1%</td><td class=""></td></tr><tr data-row="66"><td class="">流動比率（一年内返済加味）</td><td class="">—</td><td class="">—</td><td class="">—</td><td class="red num has-note" data-note="流動比率は109%だが、貸借対照表では一年内返済の長期借入金が分かれていない。年間返済額31,200千円を流動負債に加えると88%で、100%を割る可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;借入一覧&quot; data-part=&quot;line&quot;&gt;借入一覧は、残高と貸借対照表の長短借入金が合うか、返済の実際の動きと保全（担保・保証）を並べて見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E66">87.5%</td><td class=""></td></tr><tr data-row="67"><td class="">月商（売上÷月数）</td><td class="num">43,333.3</td><td class="num">41,500</td><td class="num">39,250</td><td class="num">37,000</td><td class=""></td></tr><tr data-row="68"><td class="">借入金月商倍率</td><td class="yellow num">4.6倍</td><td class="yellow num">4.8倍</td><td class="yellow num">5.0倍</td><td class="red num has-note" data-note="有利子負債が月商の4.6倍→5.5倍に増加。月商の5倍超は過大な可能性。面談で確認" data-where="財務分析 E68">5.5倍</td><td class=""></td></tr><tr data-row="69"><td class="">債務償還年数</td><td class="yellow num">12.3年</td><td class="red num">123.9年</td><td class="red">返済原資なし</td><td class="red has-note" data-note="償却前営業利益が年換算でマイナスのため返済原資なし。第22期でも124年と、返済できる水準を大きく超えている可能性。返済条件の見直しが論点になる可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;資金繰り&quot; data-part=&quot;line&quot;&gt;償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E69">返済原資なし</td><td class=""></td></tr><tr data-row="70"><td class="">売掛金回転日数</td><td class="num">42.9日</td><td class="num">44.1日</td><td class="yellow num">48.5日</td><td class="red num has-note" data-note="売掛金回転日数が42.9日→53.5日と10.6日延びている。回収条件の悪化や古い債権の残存の可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;売掛金&quot; data-part=&quot;line&quot;&gt;売掛金は残高でなく、売掛先別の滞留期間を見る。古い債権が混じっていないか（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E70">53.5日</td><td class=""></td></tr><tr data-row="71"><td class="">棚卸資産回転日数</td><td class="num">35.6日</td><td class="yellow num">41.8日</td><td class="red num">51.0日</td><td class="red num has-note" data-note="棚卸資産回転日数が35.6日→56.5日。製造卸で在庫が重くなっている可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;在庫&quot; data-part=&quot;line&quot;&gt;在庫は金額でなく、品目別の滞留と評価の根拠を見る。賞味期限や品質で売れないものが混じっていないか（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E71">56.5日</td><td class=""></td></tr><tr data-row="72"><td class="">現預金月商比（か月）</td><td class="num">1.1か月</td><td class="num">0.9か月</td><td class="yellow num">0.6か月</td><td class="red num">0.3か月</td><td class=""></td></tr><tr data-row="73"><td class="">年間返済額（借入一覧の月返済×12）</td><td class="">—</td><td class="">—</td><td class="">—</td><td class="red num has-note" data-note="年間返済額31,200千円に対し、営業CF（年換算）は-30,750千円。返済を営業CFでは賄えず、手元資金か新規借入に頼る形の可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;借入一覧&quot; data-part=&quot;line&quot;&gt;借入一覧は、残高と貸借対照表の長短借入金が合うか、返済の実際の動きと保全（担保・保証）を並べて見る（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E73">31,200</td><td class=""></td></tr><tr data-row="74"><td class="">営業CF（年換算）</td><td class="">—</td><td class="num neg">-5,070</td><td class="num neg">-15,630</td><td class="num neg">-30,750</td><td class=""></td></tr><tr data-row="75"><td class="">返済後の手残り（償却前営業利益－利息－年間返済額）</td><td class="">—</td><td class="">—</td><td class="">—</td><td class="red num neg">-59,400</td><td class=""></td></tr><tr data-row="76"><td class="">現預金の持ち月数（概算）</td><td class="">—</td><td class="">—</td><td class="">—</td><td class="red num has-note" data-note="営業CFの月次赤字と月返済から、現預金が約1.8か月で尽きる計算（概算）。賞与・社会保険料の遅れ分は含まず、実際はさらに短い可能性。面談で確認&lt;br&gt;【知見の帳簿】&lt;span class=&quot;lg&quot; data-key=&quot;資金繰り&quot; data-part=&quot;line&quot;&gt;償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる（出所：初期値（一般的な再生実務））&lt;/span&gt;" data-where="財務分析 E76">1.8か月</td><td class=""></td></tr><tr data-row="77"><td class="">債務償還年数＝有利子負債÷償却前営業利益（第24期は年換算）。マイナスなら「返済原資なし」。持ち月数＝現預金÷（営業CFの月次赤字＋月返済）。賞与・社保の遅れ分は含まない概算。</td><td class=""></td><td class=""></td><td class=""></td><td class=""></td><td class=""></td></tr></table></div><div class="sheet" data-sheet="after-フォロー記録"><table><colgroup><col style="width:6.1%"><col style="width:31.3%"><col style="width:31.3%"><col style="width:31.3%"></colgroup><tr data-row="1"><td class="b">フォロー記録　A社（架空）</td><td class=""></td><td class=""></td><td class=""></td></tr><tr data-row="2"><td class="">架空データ。仮説の下書き。再生の判断・銀行との交渉の方針は人が決める。</td><td class=""></td><td class=""></td><td class=""></td></tr><tr class="gap"><td colspan="4"></td></tr><tr data-row="4"><td class="head2 b">① 事前ヒアリング（解決したい問題点・ニーズ）</td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="5"><td class="head b">No</td><td class="head b">申告内容</td><td class="head b">財務の数字との関係</td><td class="head b"></td></tr><tr data-row="6"><td class="num">1</td><td class="">来月（12月）の賞与と年末の支払いが不安。手元資金が1,000万円を切った</td><td class="">現預金9,500千円、月商の0.26か月分。営業CFの月次赤字と月返済から約1.8か月（概算）</td><td class=""></td></tr><tr data-row="7"><td class="num">2</td><td class="">金融機関2（銀行）に追加の融資を相談したが、決算を見てからと言われ止まっている</td><td class="">短期借入金が20,000→55,000千円で、すでに借入が積み上がっている</td><td class=""></td></tr><tr data-row="8"><td class="num">3</td><td class="">主要取引先のスーパー1社（売上の約3割）が来年から仕入れ先を見直すと聞いた</td><td class="">売上は2期で-9.4%。年換算売上の3割は約133,200千円</td><td class=""></td></tr><tr data-row="9"><td class="num">4</td><td class="">社会保険料の支払いを2か月遅らせている</td><td class="">未払金が8,000→14,500千円。社保の遅れが含まれる可能性</td><td class=""></td></tr><tr data-row="10"><td class="num">5</td><td class="">息子（専務）に継がせたいが、借入の保証が心配で本人が迷っている</td><td class="">借入一覧の社長保証付き：金融機関1（信用金庫・架空）・金融機関3（公庫）</td><td class=""></td></tr><tr class="gap"><td colspan="4"></td></tr><tr data-row="12"><td class="head2 b">② 質問するポイント（財務分析シートを踏まえて）</td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="13"><td class="head b">No</td><td class="head b">質問</td><td class="head b">数字の根拠</td><td class="head b">知見の帳簿の見方（出所つき）</td></tr><tr data-row="14"><td class="num">1</td><td class="">12月の賞与と年末の支払に、手元資金で足りるか。賞与額・支払予定日・足りない場合の手当てはあるか</td><td class="">現預金9,500千円（月商の0.26か月）。営業CFの月次赤字と月返済から約1.8か月分（概算）</td><td class=""><span class="lg" data-key="資金繰り" data-part="line">償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="15"><td class="num">2</td><td class="">当座貸越55,000千円（期限2027/3）の更新見通しは。追加融資の相談が止まっている理由は何と言われたか</td><td class="">短期借入金 20,000→55,000千円。決算を見てからと言われ止まっている（ヒアリング）</td><td class=""><span class="lg" data-key="短期借入" data-part="line">短期借入や当座貸越が増えているときは、赤字の穴埋めに使われていないか、期限と更新の見通しを見る（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="16"><td class="num">3</td><td class="">売上の約3割を占めるスーパーとの取引条件と、見直しの時期・条件は。失った場合の粗利の減り方は</td><td class="">売上 520,000→471,000千円（-9.4%）。年換算売上444,000千円の3割は約133,200千円</td><td class=""><span class="lg" data-key="取引先集中" data-part="line">売上の大きな取引先は、取引条件と見直しの時期、失った場合の粗利への影響を見る（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="17"><td class="num">4</td><td class="">売上総利益率の低下は、原材料高・値引き・ロスのどれが大きいか。値上げの価格転嫁はどこまで進んでいるか</td><td class="">売上総利益率 26.0%→21.0%。営業利益は第22期から赤字</td><td class=""></td></tr><tr data-row="18"><td class="num">5</td><td class="">在庫が増えた理由は何か。賞味期限が近いもの、売れる見込みの薄いものはどれだけあるか</td><td class="">棚卸資産 38,000→55,000千円。回転日数35.6→56.5日</td><td class=""><span class="lg" data-key="在庫" data-part="line">在庫は金額でなく、品目別の滞留と評価の根拠を見る。賞味期限や品質で売れないものが混じっていないか（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="19"><td class="num">6</td><td class="">売上が減っているのに売掛金が増えている理由は。回収が遅れている先、古い債権はあるか</td><td class="">売掛金 61,000→63,500千円（売上は-5.4%）。回転日数42.9→53.5日</td><td class=""><span class="lg" data-key="売掛金" data-part="line">売掛金は残高でなく、売掛先別の滞留期間を見る。古い債権が混じっていないか（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="20"><td class="num">7</td><td class="">役員貸付金は何の資金か。返済の見込みと、これ以上増やさない手立てはあるか</td><td class="">役員貸付金 3,000→11,000千円。第24期の役員報酬は8か月で8,000千円</td><td class=""><span class="lg" data-key="役員貸付金" data-part="line">役員貸付金は、増えた経緯と返済の見込みを確かめ、個人資産との関係も見る（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="21"><td class="num">8</td><td class="">社会保険料を2か月遅らせている分の金額と、年金事務所への相談状況は。税金の滞納はないか</td><td class="">未払金 8,000→14,500千円（+81.2%）。社会保険料の支払を2か月遅らせている（ヒアリング）</td><td class=""><span class="lg" data-key="未払金" data-part="line">未払金の増加は、税金・社会保険料・仕入以外の支払の先送りがないか内訳を見る（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="22"><td class="num">9</td><td class="">借入一覧の月返済は実際に払えているか。長期借入金の動きが返済予定と合わない理由は。条件変更の相談歴はあるか</td><td class="">月返済合計2,600千円（年31,200千円）。第23期の長期借入金の減少は13,170千円のみ</td><td class=""><span class="lg" data-key="借入一覧" data-part="line">借入一覧は、残高と貸借対照表の長短借入金が合うか、返済の実際の動きと保全（担保・保証）を並べて見る（出所：初期値（一般的な再生実務））</span></td></tr><tr data-row="23"><td class="num">10</td><td class="">専務への承継の意思と時期は。社長保証の対象となっている借入と、保証の外し方についての考えは</td><td class="">借入一覧で社長保証付き：金融機関1（信用金庫・架空）（長期・設備）・金融機関3（公庫）（長期・運転）。専務は保証が心配で迷っている（ヒアリング）</td><td class=""></td></tr><tr class="gap"><td colspan="4"></td></tr><tr data-row="25"><td class="head2 b">③ 問題解決の方向性（仮説・断定しない）</td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="26"><td class="head b">No</td><td class="head b">方向性</td><td class="head b">根拠となる数字</td><td class="head b">留意点</td></tr><tr data-row="27"><td class="num">1</td><td class="">返済条件の見直し（リスケ）を軸に、資金繰りを安定させる</td><td class="">償却前営業利益は年換算-22,350千円、年間返済額31,200千円、現預金9,500千円。返済原資が本業から出ていない</td><td class="">金融機関ごとに保全（担保・保証協会・保証）が違い、足並みが論点。方針と交渉は人が決める</td></tr><tr data-row="28"><td class="num">2</td><td class="">在庫・売掛金・遊休資産を圧縮して現金化する</td><td class="">棚卸資産回転日数35.6→56.5日、売掛金回転日数42.9→53.5日。固定資産の使用状況も確認の余地</td><td class="">売れない在庫や回収見込みの薄い債権は、現金化でなく評価損・償却として扱う可能性。面談で実態を確認</td></tr><tr data-row="29"><td class="num">3</td><td class="">役員貸付金を整理する（返済計画、または役員報酬との整理）</td><td class="">役員貸付金3,000→11,000千円。自己資本比率3.7%</td><td class="">回収できないと見る場合は純資産への影響が出る。社長個人の資産・負債との整理が必要になる可能性</td></tr><tr data-row="30"><td class="num">4</td><td class="">取引先集中への対応（条件の維持と代替の販路）</td><td class="">主要取引先は売上の約3割（年換算で約133,200千円）。売上は2期で-9.4%</td><td class="">値上げ受け入れで継続できるなら、失う場合との粗利の比較が材料になる。条件の詳細は面談で確認</td></tr><tr data-row="31"><td class="num">5</td><td class="">後継と経営者保証の整理（承継の可否と保証の扱いを計画に織り込む）</td><td class="">専務は保証が心配で迷っている（ヒアリング）。社長保証付きの借入が借入一覧にある</td><td class="">保証の扱いは金融機関との合意事項。承継の意思・時期の確認が先</td></tr><tr class="gap"><td colspan="4"></td></tr><tr data-row="33"><td class="head2 b">④ 面談後に分かったこと（議事録より）</td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="34"><td class="head b">No</td><td class="head b">議事録の内容</td><td class="head b">数字・分析への反映</td><td class="head b">影響（仮置き）</td></tr><tr data-row="35"><td class="num">1</td><td class="">在庫が増えたのは、値上げ前に原材料を買いだめしたため。うち約800万円は賞味期限が近く、売れる見込みが薄い</td><td class="">財務分析の棚卸資産（第24期）に所見を追記。在庫増は値上げ前の買いだめとの説明で、買いだめ自体は不自然でないが、売れない分が評価損になる可能性</td><td class="">約8,000千円を評価損とすると、純資産10,760千円は2,760千円に（最大の見方）。不良分を除く在庫47,000千円</td></tr><tr data-row="36"><td class="num">2</td><td class="">役員貸付金は社長個人の住宅ローン返済の立替。社長も認識あり</td><td class="">財務分析の役員貸付金に所見を追記。経緯は個人の住宅ローン返済の立替で、社長も認識あり。事業の資金ではなく個人用途だったことが分かった</td><td class="">回収できないと見る場合、純資産から11,000千円減る可能性。報酬を半分にする話との整合が論点</td></tr><tr data-row="37"><td class="num">3</td><td class="">売掛金のうち約600万円は、2年前に取引を止めた先の未回収</td><td class="">財務分析の売掛金に所見を追記。2年前に取引を止めた先の未回収で、回収の見込みは薄い可能性</td><td class="">約6,000千円を貸倒とすると、売掛金回転日数は53.5日→48.6日。在庫分と合わせた実質純資産は-3,240千円（債務超過の可能性）</td></tr><tr data-row="38"><td class="num">4</td><td class="">工場の第2ラインは稼働率4割。売却や賃貸の話は来ていない</td><td class="">財務分析の有形固定資産に所見を追記。第2ラインが遊休に近い可能性。売却・賃貸の打診はまだない</td><td class="">稼働率40%。現金化の即効性は低い可能性。担保設定（工場土地建物に根抵当）との関係を確認</td></tr><tr data-row="39"><td class="num">5</td><td class="">主要スーパーとの取引は、値上げ交渉を受け入れれば続く見込み。粗利は2ポイント下がる</td><td class="">財務分析の売上総利益率に所見を追記。値上げ交渉を受け入れれば取引は続く見込み</td><td class="">粗利2ポイント低下の影響は、当該取引先分のみなら年約2,664千円、全社に及ぶなら年約8,880千円。取引を失う場合の粗利減は年約27,990千円（粗利率21.0%で概算）。継続のほうが損失は小さい可能性</td></tr><tr data-row="40"><td class="num">6</td><td class="">社長は、雇用だけは守りたい。自分の役員報酬は半分にしてよいと言っている</td><td class="">財務分析の役員報酬に所見を追記。雇用を守りたいという社長の意向と、報酬半減の申し出</td><td class="">年換算12,000千円→6,000千円（年6,000千円の改善）。償却前営業利益は年換算-22,350千円で、これだけでは赤字を埋められない可能性</td></tr><tr class="gap"><td colspan="4"></td></tr><tr data-row="42"><td class="head2 b">⑤ 残る確認</td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="43"><td class="head b">No</td><td class="head b">確認事項</td><td class="head b">理由</td><td class="head b"></td></tr><tr data-row="44"><td class="num">1</td><td class="">粗利2ポイント低下の対象は、当該スーパーの取引分のみか、全社か</td><td class="">影響額が年約2,664千円と約8,880千円で大きく違う</td><td class=""></td></tr><tr data-row="45"><td class="num">2</td><td class="">12月の賞与額と、社会保険料の遅れ分の金額・年金事務所への相談状況</td><td class="">手元資金があと約1.8か月（概算）で、賞与・社保の遅れ分は含まれていない</td><td class=""></td></tr><tr data-row="46"><td class="num">3</td><td class="">当座貸越（金融機関2（銀行・架空）、期限2027/3）の更新見通しと、追加融資が止まっている理由</td><td class="">短期借入が増え、決算を見てからと言われている</td><td class=""></td></tr><tr data-row="47"><td class="num">4</td><td class="">借入一覧の月返済と貸借対照表の長期借入金の減少が合わない理由（新規・借換えの有無）</td><td class="">第23期の長期借入金の減少は借入一覧の年間返済額より小さい</td><td class=""></td></tr><tr data-row="48"><td class="num">5</td><td class="">後継（専務）の承継意思・時期と、社長保証の扱いの考え</td><td class="">議事録に出ていない。事前ヒアリングでは専務が保証を心配して迷っている</td><td class=""></td></tr><tr data-row="49"><td class="num">6</td><td class="">売掛金の未回収先の相手・請求の経緯・時効の状況</td><td class="">回収可能性と貸倒処理の判断に必要</td><td class=""></td></tr><tr data-row="50"><td class="num">7</td><td class="">在庫の実査結果（品目別・賞味期限別）と評価の基準</td><td class="">評価損の金額の確度を上げるため</td><td class=""></td></tr><tr data-row="51"><td class="num">8</td><td class="">第2ラインの設備の権利関係（担保・リース）と売却・賃貸の可否</td><td class="">工場土地建物に根抵当が設定されている</td><td class=""></td></tr><tr data-row="52"><td class="num">9</td><td class="">社長個人の住宅ローンと、個人資産・負債の全体像</td><td class="">役員貸付金の回収可能性と保証の整理に関わる</td><td class=""></td></tr><tr class="gap"><td colspan="4"></td></tr><tr data-row="54"><td class="head2 b">反映した知見の帳簿の行</td><td class="head2"></td><td class="head2"></td><td class="head2"></td></tr><tr data-row="55"><td class="head b">キー</td><td class="head b">見方</td><td class="head b">出所</td><td class="head b"></td></tr><tr data-row="56"><td class="">役員貸付金</td><td class=""><span class="lg" data-key="役員貸付金" data-part="text">役員貸付金は、増えた経緯と返済の見込みを確かめ、個人資産との関係も見る</span></td><td class=""><span class="lg" data-key="役員貸付金" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr><tr data-row="57"><td class="">売掛金</td><td class=""><span class="lg" data-key="売掛金" data-part="text">売掛金は残高でなく、売掛先別の滞留期間を見る。古い債権が混じっていないか</span></td><td class=""><span class="lg" data-key="売掛金" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr><tr data-row="58"><td class="">在庫</td><td class=""><span class="lg" data-key="在庫" data-part="text">在庫は金額でなく、品目別の滞留と評価の根拠を見る。賞味期限や品質で売れないものが混じっていないか</span></td><td class=""><span class="lg" data-key="在庫" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr><tr data-row="59"><td class="">未払金</td><td class=""><span class="lg" data-key="未払金" data-part="text">未払金の増加は、税金・社会保険料・仕入以外の支払の先送りがないか内訳を見る</span></td><td class=""><span class="lg" data-key="未払金" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr><tr data-row="60"><td class="">短期借入</td><td class=""><span class="lg" data-key="短期借入" data-part="text">短期借入や当座貸越が増えているときは、赤字の穴埋めに使われていないか、期限と更新の見通しを見る</span></td><td class=""><span class="lg" data-key="短期借入" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr><tr data-row="61"><td class="">資金繰り</td><td class=""><span class="lg" data-key="資金繰り" data-part="text">償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる</span></td><td class=""><span class="lg" data-key="資金繰り" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr><tr data-row="62"><td class="">取引先集中</td><td class=""><span class="lg" data-key="取引先集中" data-part="text">売上の大きな取引先は、取引条件と見直しの時期、失った場合の粗利への影響を見る</span></td><td class=""><span class="lg" data-key="取引先集中" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr><tr data-row="63"><td class="">借入一覧</td><td class=""><span class="lg" data-key="借入一覧" data-part="text">借入一覧は、残高と貸借対照表の長短借入金が合うか、返済の実際の動きと保全（担保・保証）を並べて見る</span></td><td class=""><span class="lg" data-key="借入一覧" data-part="src">初期値（一般的な再生実務）</span></td><td class=""></td></tr></table></div></div>
+  <h3>再生方針の下書き</h3>
+  <div class="policy"><h2>再生方針（下書き）　A社（架空）</h2>
+<p>架空データ。分身の下書きです。再生の判断・銀行との交渉の方針は人が決めます。数字は千円、議事録と財務分析から導ける範囲に限っています。</p>
+<h3>1. 現状の見立て</h3>
+<ul>
+<li>売上は第21期520,000→第23期471,000千円（-9.4%）。営業利益は第22期から赤字で、第24期（8か月）は-20,200千円</li>
+<li>償却前営業利益は年換算-22,350千円で、返済原資が本業から出ていない（年間返済額31,200千円）</li>
+<li>現預金9,500千円。営業CFの月次赤字と月返済から約1.8か月分（概算。12月の賞与・社保の遅れ分は含まず、実際はさらに短い可能性）</li>
+<li>自己資本比率3.7%。議事録の不良資産を損失とみると実質債務超過の可能性：純資産10,760千円 → 在庫の不良分控除後2,760千円 → 売掛金の未回収分も控除後-3,240千円（さらに役員貸付金11,000千円を回収できないとすると-14,240千円）</li>
+</ul>
+<h3>2. 原因（面談と数字から言える範囲）</h3>
+<ul>
+<li>在庫の積み上がり：値上げ前の買いだめ。うち約8,000千円は賞味期限が近く売れる見込みが薄い。回転日数は35.6→56.5日</li>
+<li>売掛金の滞留：約6,000千円は2年前に取引を止めた先の未回収</li>
+<li>役員貸付金の増加（3,000→11,000千円）：社長個人の住宅ローン返済の立替。事業の資金ではない</li>
+<li>粗利率の低下（26.0%→21.0%）：原因の内訳（原価高・値引き・ロス）は議事録に無く、未確認</li>
+<li>設備の遊休：第2ラインの稼働率は40%。固定費の重さにつながっている可能性</li>
+</ul>
+<h3>3. 方針の柱（仮説）</h3>
+<ol>
+<li>資金繰りの安定：返済条件の見直し（リスケ）を軸に、金融機関と話す前提を整える</li>
+<li>不良資産の整理：不良在庫・回収見込みの薄い売掛金を、現金化できるものと損失として処理するものに分ける。不良分を除く在庫47,000千円を第21期並みの回転日数（35.6日）まで圧縮できた場合の現金化余地は約12,367千円（上限の目安・実現性は未確認）</li>
+<li>主要取引先の維持：値上げ交渉を受け入れて取引を続ける案。粗利2ポイント低下の影響は年約2,664千円（当該取引先分のみの場合）〜約8,880千円（全社に及ぶ場合）。取引を失うと年約27,990千円の粗利減（概算）となるため、継続のほうが損失は小さい可能性</li>
+<li>経営者の自助努力：役員報酬の半減（年6,000千円の改善）。雇用を守る意向と合わせ、銀行に示す姿勢になる。ただし償却前営業利益の赤字（年換算-22,350千円）を埋めるには足りない可能性があり、収益改善の追加施策は面談の話の外から探す必要がある。役員報酬の減額は税務上の扱いに留意</li>
+<li>役員貸付金の整理：個人の住宅ローン立替として、返済方法（報酬・個人資産との整理）を計画に織り込む。報酬を半分にする話と整合が取れるか確認</li>
+<li>後継・保証の整理：議事録に出ていないため、方針には入れず「未確認」に置く</li>
+</ol>
+<h3>4. 90日でやること（案）</h3>
+<h4>0〜30日</h4>
+<ul>
+<li>13週間の資金繰り表を作り、12月の賞与・年末の支払・社会保険料の遅れ分の手当てを決める</li>
+<li>不良在庫・売掛金の一覧化（品目・賞味期限・相手先・経緯）。評価損・貸倒の金額を詰める</li>
+<li>主要スーパーの値上げ交渉の条件を整理する</li>
+<li>金融機関に説明する前に、全行の残高・保全・期限を並べた一覧を確定させる</li>
+</ul>
+<h4>31〜60日</h4>
+<ul>
+<li>在庫の処分（値引き販売・用途転換など）と売掛金の回収・整理を進める</li>
+<li>第2ラインの売却・賃貸・集約の打診（担保との関係を確認のうえ）</li>
+<li>役員報酬の減額の実施時期と、役員貸付金の返済方法を決める</li>
+<li>金融機関向けの再生計画の骨子（数値目標は面談で詰める）を作る</li>
+</ul>
+<h4>61〜90日</h4>
+<ul>
+<li>金融機関に計画を説明し、返済条件の見直しの相談を始める（交渉の方針は人が決める）</li>
+<li>月次で資金繰りと計画の差を点検する仕組みを回し始める</li>
+</ul>
+<h3>5. 銀行への説明の骨子</h3>
+<ul>
+<li>現状：営業赤字が3期続き、手元資金が9,500千円。返済原資が本業から出ていないことを、数字（償却前営業利益・営業CF）で正直に示す</li>
+<li>原因：値上げ前の買いだめによる在庫増、2年前の取引停止先の売掛金、個人用途の役員貸付金。原因を把握し、整理の計画があることを示す</li>
+<li>自助努力：役員報酬の半減、不良資産の処理、値上げ交渉を受け入れた取引の維持、遊休設備の活用の検討</li>
+<li>お願いしたいこと：返済条件の見直し（期間・金額は面談後の資金繰り表で詰める）と、当座貸越の期限更新</li>
+<li>保全・保証：社長保証付きの借入があること、後継の保証の扱いは別途整理する（未確認）</li>
+</ul>
+<h3>6. 未確認</h3>
+<ul>
+<li>粗利2ポイント低下の対象は、当該スーパーの取引分のみか、全社か（影響額が年約2,664千円と約8,880千円で大きく違う）</li>
+<li>12月の賞与額と、社会保険料の遅れ分の金額・年金事務所への相談状況（手元資金があと約1.8か月（概算）で、賞与・社保の遅れ分は含まれていない）</li>
+<li>当座貸越（金融機関2（銀行・架空）、期限2027/3）の更新見通しと、追加融資が止まっている理由（短期借入が増え、決算を見てからと言われている）</li>
+<li>借入一覧の月返済と貸借対照表の長期借入金の減少が合わない理由（新規・借換えの有無）（第23期の長期借入金の減少は借入一覧の年間返済額より小さい）</li>
+<li>後継（専務）の承継意思・時期と、社長保証の扱いの考え（議事録に出ていない。事前ヒアリングでは専務が保証を心配して迷っている）</li>
+<li>売掛金の未回収先の相手・請求の経緯・時効の状況（回収可能性と貸倒処理の判断に必要）</li>
+<li>在庫の実査結果（品目別・賞味期限別）と評価の基準（評価損の金額の確度を上げるため）</li>
+<li>第2ラインの設備の権利関係（担保・リース）と売却・賃貸の可否（工場土地建物に根抵当が設定されている）</li>
+<li>社長個人の住宅ローンと、個人資産・負債の全体像（役員貸付金の回収可能性と保証の整理に関わる）</li>
+</ul></div>
+  <p class="note">御社の再生方針の様式を1枚いただければ、その形に合わせます。再生の判断と、銀行との交渉の方針は人が決めます。</p>
+</section>
+
+</main>
+
+<div class="note-panel" id="notePanel"><button class="x" id="noteClose" aria-label="閉じる">×</button>
+  <div class="where" id="noteWhere"></div><div id="noteBody"></div></div>
+
+<script>
+const LEDGER0 = [{"key": "役員貸付金", "text": "役員貸付金は、増えた経緯と返済の見込みを確かめ、個人資産との関係も見る", "src": "初期値（一般的な再生実務）"}, {"key": "売掛金", "text": "売掛金は残高でなく、売掛先別の滞留期間を見る。古い債権が混じっていないか", "src": "初期値（一般的な再生実務）"}, {"key": "在庫", "text": "在庫は金額でなく、品目別の滞留と評価の根拠を見る。賞味期限や品質で売れないものが混じっていないか", "src": "初期値（一般的な再生実務）"}, {"key": "未払金", "text": "未払金の増加は、税金・社会保険料・仕入以外の支払の先送りがないか内訳を見る", "src": "初期値（一般的な再生実務）"}, {"key": "短期借入", "text": "短期借入や当座貸越が増えているときは、赤字の穴埋めに使われていないか、期限と更新の見通しを見る", "src": "初期値（一般的な再生実務）"}, {"key": "資金繰り", "text": "償却前営業利益がマイナスなら返済原資がないので、手元資金があと何か月もつかを先に押さえる", "src": "初期値（一般的な再生実務）"}, {"key": "取引先集中", "text": "売上の大きな取引先は、取引条件と見直しの時期、失った場合の粗利への影響を見る", "src": "初期値（一般的な再生実務）"}, {"key": "借入一覧", "text": "借入一覧は、残高と貸借対照表の長短借入金が合うか、返済の実際の動きと保全（担保・保証）を並べて見る", "src": "初期値（一般的な再生実務）"}];
+const NEW_KEY = "__new__";
+const MY_SRC = "道家様 2026-11-24";
+let edits = {};   // key -> 道家様の言葉
+let added = [];   // 新しく足した見方
+
+const $ = s => document.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const PRISTINE = document.querySelector("#book-before").innerHTML;  // 直す前の分身の下書き（比較の左側）
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* タブ */
+function showSheet(book, target){
+  $$(`#book-${book} .tab`).forEach(t => t.classList.toggle("on", t.dataset.target === target));
+  $$(`#book-${book} .sheet`).forEach(s => s.classList.toggle("on", s.dataset.sheet === target));
+}
+$$(".tab").forEach(t => t.addEventListener("click", () => showSheet(t.dataset.book, t.dataset.target)));
+["before","after"].forEach(b => { const f = $(`#book-${b} .tab`); if (f) showSheet(b, f.dataset.target); });
+
+/* 帳簿の差し替え（画面の中の該当箇所すべて） */
+function applyEdits(root){
+  let n = 0;
+  $$(".lg", root).forEach(el => {
+    const t = edits[el.dataset.key];
+    if (t === undefined) return;
+    const part = el.dataset.part;
+    el.textContent = part === "line" ? `${t}（出所：${MY_SRC}）` : part === "text" ? t : MY_SRC;
+    el.classList.add("new"); n++;
+  });
+  return n;
+}
+function countNotes(book){
+  let n = 0;
+  $$(`#book-${book} td.has-note`).forEach(td => {
+    const d = document.createElement("div"); d.innerHTML = td.dataset.note;
+    $$(".lg", d).forEach(el => { if (edits[el.dataset.key] !== undefined) n++; });
+  });
+  return n;
+}
+
+/* コメント欄 */
+function openNote(td){
+  $$("td.sel").forEach(x => x.classList.remove("sel"));
+  td.classList.add("sel");
+  $("#noteWhere").textContent = "分身の所見（コメント）　" + td.dataset.where;
+  const isBefore = !!td.closest(".pane-l");
+  $("#noteWhere").textContent = (isBefore ? "【入れる前】" : "") + "分身の所見（コメント）　" + td.dataset.where;
+  $("#noteBody").innerHTML = td.dataset.note.replace(/\n/g, "<br>").replace(/ \/ /g, "<br>");
+  if (!isBefore) applyEdits($("#noteBody"));
+  $("#notePanel").classList.add("on");
+}
+document.addEventListener("click", e => {
+  const td = e.target.closest("td.has-note");
+  if (td) openNote(td);
+});
+$("#noteClose").addEventListener("click", () => { $("#notePanel").classList.remove("on"); $$("td.sel").forEach(x => x.classList.remove("sel")); });
+
+/* 分身を動かす（試作の処理の流れを順に見せる） */
+async function runLog(lines){
+  const log = $("#log"); log.innerHTML = "";
+  for (const [text, cls, wait] of lines){
+    await sleep(wait);
+    const d = document.createElement("div"); d.className = cls || ""; d.textContent = text; log.appendChild(d);
+  }
+}
+$("#run").addEventListener("click", async () => {
+  $("#run").disabled = true;
+  await runLog([
+    ["▶ 正本を読む：見る順番と様式（道家様 11/17 のお答え）", "", 200],
+    ["▶ 正本を読む：知見の帳簿（" + (LEDGER0.length + added.length) + "行）", "", 700],
+    ["▶ 届いた資料を読む：決算書3期・試算表（8か月）・借入一覧", "", 700],
+    ["▶ 固有名詞を伏せ字にする：社名→A社、社長→A氏、金融機関→金融機関1〜3（対応表は御社の手元だけ）", "hi", 900],
+    ["▶ キャッシュフロー計算書を作る（貸借対照表の増減から）", "", 800],
+    ["▶ 4期の推移を並べ、悪化に薄赤・注意に薄黄を付ける", "", 700],
+    ["▶ 所見をコメントに書く（断定せず「面談で確認」）。帳簿の見方を添える", "", 800],
+    ["▶ フォロー記録：質問するポイント10個と、問題解決の方向性5つ", "", 800],
+    ["✔ 出来上がり：顧客マスター／財務分析シート／フォロー記録", "ok", 700],
+  ]);
+  $("#st3").classList.remove("locked"); $("#st4").classList.remove("locked"); $("#st5").classList.remove("locked");
+  $("#run").disabled = false; $("#run").textContent = "▶ もう一度動かす";
+  setTimeout(() => $("#st3").scrollIntoView({behavior:"smooth"}), 500);
+});
+
+/* 帳簿の表と選択肢 */
+function ledgerRows(){
+  const base = LEDGER0.map(x => edits[x.key] !== undefined ? {key:x.key, text:edits[x.key], src:MY_SRC, mine:true} : {...x, mine:false});
+  return base.concat(added.map(x => ({...x, mine:true})));
+}
+function renderLedger(){
+  $("#ledger").innerHTML = ledgerRows().map(x =>
+    `<tr class="${x.mine ? "mine" : ""}"><td class="key">${esc(x.key)}</td><td>${esc(x.text)}</td><td class="src">出所：${esc(x.src)}</td></tr>`).join("");
+}
+function renderSelect(){
+  $("#key").innerHTML = LEDGER0.map(x => `<option value="${esc(x.key)}">${esc(x.key)}</option>`).join("")
+    + `<option value="${NEW_KEY}">（新しい見方を足す）</option>`;
+  $("#key").value = "役員貸付金";
+  syncCur();
+}
+function syncCur(){
+  const k = $("#key").value;
+  const row = ledgerRows().find(x => x.key === k);
+  $("#cur").value = k === NEW_KEY ? "（まだありません。質問ポイントの最後に足されます）" : row ? `${row.text}（出所：${row.src}）` : "";
+}
+$("#key").addEventListener("change", syncCur);
+
+/* 新しい見方：フォロー記録の②の最後に質問を1行足す */
+function addQuestionRow(text){
+  const sheet = $('#book-before .sheet[data-sheet="before-フォロー記録"]');
+  const rows = $$("tr", sheet);
+  const start = rows.findIndex(tr => tr.textContent.startsWith("②"));
+  let last = start;
+  for (let i = start + 1; i < rows.length; i++){
+    const first = rows[i].querySelector("td");
+    if (first && /^\d+$/.test(first.textContent.trim())) last = i;
+    if (rows[i].textContent.startsWith("③")) break;
+  }
+  const no = Number(rows[last].querySelector("td").textContent) + 1;
+  const tr = document.createElement("tr"); tr.className = "added";
+  tr.innerHTML = `<td class="num">${no}</td><td>【帳簿から追加】${esc(text)}</td><td>知見の帳簿の行による追加</td><td>出所：${MY_SRC}</td>`;
+  rows[last].after(tr);
+  return tr;
+}
+
+$("#apply").addEventListener("click", async () => {
+  const k = $("#key").value, t = $("#txt").value.trim();
+  if (!t){ $("#txt").focus(); return; }
+  $("#apply").disabled = true;
+  $("#result").classList.remove("on");
+  if (k === NEW_KEY){
+    const key = t.slice(0, 8);
+    added.push({key, text:t, src:MY_SRC});
+  } else {
+    edits[k] = t;
+  }
+  renderLedger(); syncCur();
+  await runLog([
+    [`▶ 知見の帳簿に1行入れる：「${t}」（出所：${MY_SRC}）`, "hi", 200],
+    ["▶ もう一度動かす：正本と帳簿を読み直す", "", 700],
+    ["▶ 所見のコメントと、質問するポイントを作り直す", "", 900],
+    ["✔ 反映しました", "ok", 600],
+  ]);
+  let msg;
+  if (k === NEW_KEY){
+    addQuestionRow(t);
+    showSheet("before", "before-フォロー記録");
+    msg = `新しい見方を帳簿に足しました。フォロー記録の「② 質問するポイント」の最後に1行増えています。`;
+  } else {
+    applyEdits(document);
+    const n = $$("#book-before .lg.new").length;
+    const notes = countNotes("before");
+    msg = `「${esc(k)}」の見方を道家様の言葉に置き換えました。面談前の資料で <b>${n}か所</b>（質問ポイント・帳簿の表）と、<b>所見のコメント${notes}か所</b>が変わっています。面談後の資料にも同じく効きます。`;
+    showSheet("before", "before-フォロー記録");
+  }
+  $("#result").innerHTML = msg + "<br>この1行は、この会社だけでなく、次の案件にもその次の案件にも効きます。"
+    + '<br><a href="#cmp">▼ 入れる前と入れた後を、左右に並べて見る</a>';
+  $("#result").classList.add("on");
+  showCompare();
+  $("#apply").disabled = false;
+});
+
+/* 前後の比較（左＝直す前、右＝いま） */
+let cmpSheet = "before-フォロー記録";
+function rowLabel(td){
+  const tr = td.closest("tr"), first = tr.querySelector("td");
+  const sheet = td.closest(".sheet").dataset.sheet.replace(/^before-/, "");
+  const head = first && first !== td ? first.textContent.trim().slice(0, 14) : "";
+  return head ? `${sheet}（${head}の行）` : sheet;
+}
+function buildDiff(){
+  const pristine = document.createElement("div"); pristine.innerHTML = PRISTINE;
+  const rows = [];
+  $$(".lg", pristine).forEach(el => {
+    const t = edits[el.dataset.key]; if (t === undefined) return;
+    const now = el.dataset.part === "line" ? `${t}（出所：${MY_SRC}）` : el.dataset.part === "text" ? t : MY_SRC;
+    rows.push([rowLabel(el.closest("td")), el.textContent, now]);
+  });
+  $$("td.has-note", pristine).forEach(td => {
+    const d = document.createElement("div"); d.innerHTML = td.dataset.note;
+    $$(".lg", d).forEach(el => {
+      const t = edits[el.dataset.key]; if (t === undefined) return;
+      rows.push([`所見のコメント（${td.dataset.where}）`, el.textContent, `${t}（出所：${MY_SRC}）`]);
+    });
+  });
+  added.forEach(x => rows.push(["フォロー記録（②質問するポイントの最後）", "（なし）", `【帳簿から追加】${x.text}`]));
+  $("#diffBody").innerHTML = rows.map(([w, a, b]) =>
+    `<tr><td class="where">${esc(w)}</td><td class="was">${esc(a)}</td><td class="now">${esc(b)}</td></tr>`).join("");
+}
+function renderCompare(){
+  const pristine = document.createElement("div"); pristine.innerHTML = PRISTINE;
+  const left = pristine.querySelector(`.sheet[data-sheet="${cmpSheet}"]`).cloneNode(true);
+  const right = $(`#book-before .sheet[data-sheet="${cmpSheet}"]`).cloneNode(true);
+  $$(".lg", left).forEach(el => { if (edits[el.dataset.key] !== undefined) el.classList.add("old"); });
+  $("#paneL").replaceChildren(left); $("#paneR").replaceChildren(right);
+  let lock = false;
+  const sync = (a, b) => a.addEventListener("scroll", () => { if (lock) return; lock = true; b.scrollTop = a.scrollTop; b.scrollLeft = a.scrollLeft; requestAnimationFrame(() => lock = false); });
+  sync(left, right); sync(right, left);
+  const hit = right.querySelector(".lg.new, tr.added");
+  if (hit){ right.scrollTop = Math.max(0, hit.closest("tr").offsetTop - 120); left.scrollTop = right.scrollTop; }
+  $$("#cmpTabs button").forEach(b => b.classList.toggle("on", b.dataset.s === cmpSheet));
+}
+function initCompareTabs(){
+  $("#cmpTabs").innerHTML = $$("#book-before .tab").map(t =>
+    `<button data-s="${esc(t.dataset.target)}">${esc(t.textContent)}</button>`).join("");
+  $$("#cmpTabs button").forEach(b => b.addEventListener("click", () => { cmpSheet = b.dataset.s; renderCompare(); }));
+}
+function showCompare(){
+  cmpSheet = "before-フォロー記録";
+  $("#cmp").style.display = "block";
+  renderCompare(); buildDiff();
+  setTimeout(() => $("#cmp").scrollIntoView({behavior:"smooth"}), 300);
+}
+initCompareTabs();
+
+$("#reset").addEventListener("click", () => { location.hash = ""; location.reload(); });
+
+renderSelect(); renderLedger();
+</script>
+</body>
+</html>
