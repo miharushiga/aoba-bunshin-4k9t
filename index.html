@@ -208,7 +208,9 @@
     <select id="key"></select>
     <label for="cur">いまの帳簿の行</label>
     <input id="cur" readonly>
-    <label for="txt">道家様の言葉</label>
+    <label for="raw">道家様のお話<br><span class="sub" style="font-weight:400">思いのまま、そのまま</span></label>
+    <textarea id="raw" placeholder="道家様がお話しになったことを、そのまま入れます"></textarea>
+    <label for="txt">知見の1行<br><span class="sub" style="font-weight:400">お話をまとめたもの</span></label>
     <textarea id="txt" placeholder="例：役員貸付金は、まず社長個人の何に使ったかを最初に聞く"></textarea>
     <span></span>
     <div><button class="btn" id="apply">帳簿に入れて、もう一度動かす</button>
@@ -321,6 +323,7 @@ const NEW_KEY = "__new__";
 const MY_SRC = "道家様 2026-11-24";
 let edits = {};   // key -> 道家様の言葉
 let added = [];   // 新しく足した見方
+let rawOf = {};   // key -> 道家様のお話（まとめる前の原文）
 
 const $ = s => document.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
@@ -407,7 +410,7 @@ function ledgerRows(){
 }
 function renderLedger(){
   $("#ledger").innerHTML = ledgerRows().map(x =>
-    `<tr class="${x.mine ? "mine" : ""}"><td class="key">${esc(x.key)}</td><td>${esc(x.text)}</td><td class="src">出所：${esc(x.src)}</td></tr>`).join("");
+    `<tr class="${x.mine ? "mine" : ""}"><td class="key">${esc(x.key)}</td><td>${esc(x.text)}${rawOf[x.key] ? `<div class="sub" style="margin-top:6px">元のお話：${esc(rawOf[x.key])}</div>` : ""}</td><td class="src">出所：${esc(x.src)}</td></tr>`).join("");
 }
 function renderSelect(){
   $("#key").innerHTML = LEDGER0.map(x => `<option value="${esc(x.key)}">${esc(x.key)}</option>`).join("")
@@ -441,8 +444,10 @@ function addQuestionRow(text){
 }
 
 $("#apply").addEventListener("click", async () => {
-  const k = $("#key").value, t = $("#txt").value.trim();
-  if (!t){ $("#txt").focus(); return; }
+  const k = $("#key").value, raw = $("#raw").value.trim();
+  const t = $("#txt").value.trim() || raw;
+  if (!t){ $("#raw").focus(); return; }
+  if (raw && raw !== t) rawOf[k === NEW_KEY ? t.slice(0, 8) : k] = raw;
   $("#apply").disabled = true;
   $("#result").classList.remove("on");
   if (k === NEW_KEY){
